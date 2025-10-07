@@ -440,7 +440,7 @@
 
     /* --- CARREGAR AGENDAMENTOS --- */
     async function carregarAgendamentos() {
-      const filtroNome = document.getElementById('filtroNome').value;
+      if (filtroNome && !(a.nome || "").toLowerCase().includes(filtroNome)) return false;
       const filtroData = document.getElementById('filtroData').value;
       
       let url = `${WEB_APP_URL}?acao=listarAgendamentos`;
@@ -602,5 +602,6 @@
   </script>
 </body>
 </html>
+
 
 
