@@ -14,60 +14,31 @@
       --text: #333333;
       --light-text: #666666;
     }
-
     * { box-sizing: border-box; }
+    body{ font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:var(--bg); margin:0; padding:20px; color:var(--text); min-height:100vh; }
 
-    body{
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: var(--bg);
-      margin: 0;
-      padding: 20px;
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* LOGIN STYLES */
-    .login-container {
-      max-width: 400px;
-      width: 90%;
-      margin: 40px auto;
-      background: var(--card-bg);
-      padding: 40px 30px;
-      border-radius: 20px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    .login-icon { width:80px;height:80px;background:var(--accent);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:white;font-size:32px; }
+    /* Login */
+    .login-container{ max-width:400px; width:90%; margin:40px auto; background:var(--card-bg); padding:40px 30px; border-radius:20px; box-shadow:0 15px 35px rgba(0,0,0,0.1); text-align:center; }
+    .login-icon{ width:80px; height:80px; background:var(--accent); border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; color:white; font-size:32px; }
     .login-title{ color:var(--accent); margin:0 0 10px 0; font-size:24px; font-weight:700; }
-    .login-subtitle{ color:var(--light-text); margin:0; font-size:14px; }
-
     .form-group{ margin-bottom:20px; text-align:left; }
-    .form-group label{ display:block; margin-bottom:8px; font-weight:600; color:var(--text); font-size:14px; }
+    .form-group label{ display:block; margin-bottom:8px; font-weight:600; font-size:14px; }
     .form-group input{ width:100%; padding:15px; border:2px solid #e9ecef; border-radius:12px; font-size:16px; background:#f8f9fa; }
     .login-btn{ width:100%; padding:15px; background:var(--accent); color:white; border:none; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; margin-top:10px; }
     .login-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(217,79,114,0.3); }
 
-    /* PANEL STYLES */
-    .panel-container { max-width:1200px; width:95%; margin:40px auto; background:var(--card-bg); padding:40px; border-radius:15px; box-shadow:0 8px 25px rgba(0,0,0,0.1); }
+    /* Panel */
+    .panel-container{ max-width:1200px; width:95%; margin:40px auto; background:var(--card-bg); padding:40px; border-radius:15px; box-shadow:0 8px 25px rgba(0,0,0,0.1); }
     h1{ text-align:center; color:var(--accent); margin-bottom:30px; font-size:28px; }
-    h2{ color:var(--accent); margin:30px 0 15px 0; font-size:20px; }
-
     input, button, select { padding:12px; margin-top:8px; border-radius:8px; border:1px solid #d0d0d0; font-size:15px; box-sizing:border-box; }
     button{ background:var(--btn); color:#fff; border:none; cursor:pointer; transition:all .3s ease; }
-    button:hover{ filter:brightness(.9); transform:translateY(-2px); }
-    .btn-red{ background:#d9534f; }
-    .btn-green{ background:#5cb85c; }
-    .btn-small{ padding:8px 16px; font-size:14px; width:auto; }
-    .logout{ text-align:right; margin-bottom:20px; }
+    .btn-red{ background:#d9534f; } .btn-green{ background:#5cb85c; } .btn-small{ padding:8px 16px; font-size:14px; width:auto; } .logout{ text-align:right; margin-bottom:20px; }
 
-    /* Filtros */
-    .filtros-container { background:#f8f9fa; padding:20px; border-radius:10px; margin-bottom:30px; display:grid; grid-template-columns:1fr 1fr auto; gap:15px; align-items:end; }
-    @media (max-width:768px){ .filtros-container{ grid-template-columns:1fr; } .panel-container{ padding:20px; } }
+    .filtros-container{ background:#f8f9fa; padding:20px; border-radius:10px; margin-bottom:30px; display:grid; grid-template-columns:1fr 1fr auto; gap:15px; align-items:end; }
+    @media(max-width:768px){ .filtros-container{ grid-template-columns:1fr; } .panel-container{ padding:20px; } }
 
-    /* Cards */
-    .agendamentos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:20px; margin-top:20px; }
-    .agendamento-card { background:var(--card-bg); border:1px solid #e9ecef; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:all .3s ease; }
+    .agendamentos-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:20px; margin-top:20px; }
+    .agendamento-card{ background:var(--card-bg); border:1px solid #e9ecef; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:all .3s ease; }
     .agendamento-card:hover{ transform:translateY(-5px); box-shadow:0 8px 20px rgba(0,0,0,0.15); }
     .card-header{ border-bottom:2px solid var(--accent); padding-bottom:10px; margin-bottom:15px; }
     .paciente-nome{ font-size:18px; font-weight:bold; color:var(--accent); margin:0; }
@@ -75,8 +46,7 @@
     .info-label{ font-weight:600; color:var(--text); }
 
     .status-badge{ display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold; margin-top:10px; }
-    .status-pendente{ background:#fff3cd; color:#856404; }
-    .status-confirmado{ background:#d1edff; color:#004085; }
+    .status-pendente{ background:#fff3cd; color:#856404; } .status-confirmado{ background:#d1edff; color:#004085; }
 
     .stats-container{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin-bottom:30px; }
     .stat-card{ background:var(--card-bg); padding:20px; border-radius:10px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
@@ -84,15 +54,13 @@
     .stat-label{ color:var(--light-text); font-size:14px; }
 
     .notice{ padding:15px; border-radius:8px; margin:15px 0; text-align:center; }
-    .notice.success{ background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
-    .notice.error{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+    .notice.success{ background:#d4edda; color:#155724; border:1px solid #c3e6cb; } .notice.error{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
 
-    .empty-state{ text-align:center; padding:40px; color:var(--light-text); }
-    .export-section{ text-align:right; margin-bottom:20px; }
+    .empty-state{ text-align:center; padding:40px; color:var(--light-text); } .export-section{ text-align:right; margin-bottom:20px; }
   </style>
 </head>
 <body>
-  <!-- Tela de Login -->
+  <!-- Login -->
   <div class="login-container" id="loginDiv">
     <div class="login-header">
       <div class="login-icon">🔐</div>
@@ -116,7 +84,7 @@
     </div>
   </div>
 
-  <!-- Painel de Controle -->
+  <!-- Painel -->
   <div class="panel-container" id="panelDiv" style="display:none;">
     <div class="logout">
       <button type="button" class="btn-red btn-small" id="logoutBtn">Sair</button>
@@ -124,7 +92,6 @@
 
     <h1>Painel de Controle - Agendamentos</h1>
 
-    <!-- Estatísticas -->
     <div class="stats-container" id="statsContainer">
       <div class="stat-card">
         <div class="stat-label">Total de Agendamentos</div>
@@ -135,12 +102,11 @@
         <div class="stat-number" id="agendamentosHoje">0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Pendentes</div>
-        <div class="stat-number" id="agendamentosPendentes">0</div>
+        <div class="stat-label">Agendamentos no mês</div>
+        <div class="stat-number" id="agendamentosNoMes">0</div>
       </div>
     </div>
 
-    <!-- Filtros -->
     <div class="filtros-container">
       <div class="field">
         <label for="filtroNome">Filtrar por Nome:</label>
@@ -156,12 +122,10 @@
       </div>
     </div>
 
-    <!-- Botão Exportar -->
     <div class="export-section">
       <button type="button" id="exportBtn" class="btn-green">📊 Exportar para Excel</button>
     </div>
 
-    <!-- Lista de Agendamentos -->
     <div id="agendamentosContainer">
       <div class="agendamentos-grid" id="agendamentosGrid"></div>
     </div>
@@ -170,46 +134,111 @@
   </div>
 
   <script>
-    // ============= CONFIG =============
+    // ============ CONFIG ============
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbymcGV_VzLEae1NS6_sJ6w8lsPmc1VJyjHfXSVXpE-lspXy63gc3Khtkujuowtv-qDW/exec";
     const LOGIN_USER = "admin";
     const LOGIN_PASS = "1234";
 
-    // armazenamento local dos agendamentos carregados (usado para export)
-    let ULTIMOS_AGENDAMENTOS = [];
+    // armazenamento
+    let FULL_AGENDAMENTOS = [];   // dados brutos carregados do servidor (normalizados em _dateISO/_time)
+    let SHOWN_AGENDAMENTOS = [];  // dados filtrados que estão sendo exibidos/exportados
 
-    // ============= HELPERS =============
+    // ============ HELPERS ============
+    function pad2(n){ return String(n).padStart(2,'0'); }
+
+    function escapeHtml(s) {
+      if (s === null || s === undefined) return '';
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    // tenta extrair YYYY-MM-DD de várias formas
+    function extractDateISO(s) {
+      if (!s) return '';
+      s = String(s).trim();
+
+      // já no formato yyyy-mm-dd
+      let m = s.match(/\d{4}-\d{2}-\d{2}/);
+      if (m) return m[0];
+
+      // formato dd/mm/yyyy
+      m = s.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/);
+      if (m) {
+        const [,d,mo,y] = m;
+        return `${y}-${mo}-${d}`;
+      }
+
+      // tentativa com ISO ou Date parsing
+      const dObj = new Date(s);
+      if (!isNaN(dObj.getTime())) {
+        const y = dObj.getFullYear();
+        const mo = pad2(dObj.getMonth()+1);
+        const da = pad2(dObj.getDate());
+        return `${y}-${mo}-${da}`;
+      }
+
+      // sem sucesso
+      return '';
+    }
+
+    // tenta extrair HH:MM
+    function extractTimeHHMM(s) {
+      if (!s) return '';
+      s = String(s);
+
+      // formato HH:MM
+      let m = s.match(/\b([01]\d|2[0-3]):[0-5]\d\b/);
+      if (m) return m[0];
+
+      // ISO time T18:06:28
+      m = s.match(/T([01]\d|2[0-3]):([0-5]\d)/);
+      if (m) return `${pad2(m[1])}:${pad2(m[2])}`;
+
+      // tentar Date parse
+      const dObj = new Date(s);
+      if (!isNaN(dObj.getTime())) {
+        return `${pad2(dObj.getHours())}:${pad2(dObj.getMinutes())}`;
+      }
+
+      return '';
+    }
+
+    // normaliza um objeto agendamento (adiciona _dateISO, _timeHHMM, _displayDate)
+    function normalizeAg(ag) {
+      // não modificar o original do servidor (mas vamos adicionar props)
+      const rawDate = ag.data || '';
+      const rawTime = ag.horario || '';
+
+      let dateISO = extractDateISO(rawDate) || extractDateISO(rawTime) || '';
+      // se ainda vazio, tentar timestamp se houver
+      if (!dateISO && ag.timestamp) dateISO = extractDateISO(ag.timestamp);
+
+      const timeHH = extractTimeHHMM(rawTime) || extractTimeHHMM(rawDate) || '';
+
+      ag._dateISO = dateISO;            // yyyy-mm-dd ou ''
+      ag._timeHHMM = timeHH;            // HH:MM ou ''
+      ag._displayDate = dateISO ? `${dateISO.split('-')[2]}/${dateISO.split('-')[1]}/${dateISO.split('-')[0]}` : '';
+    }
+
+    // ============ AUTENTICAÇÃO ============
     function showLoginNotice(msg) {
       const el = document.getElementById('loginNotice');
       if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
       el.style.display = 'block'; el.textContent = msg;
     }
 
-    function showPanelNotice(msg, type = 'error', ms = 4000) {
-      const el = document.getElementById('panelNotice');
-      el.className = 'notice ' + (type === 'success' ? 'success' : 'error');
-      el.textContent = msg;
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, ms);
-    }
-
-    function formatarData(data) {
-      if (!data) return '';
-      const parts = String(data).split('-');
-      if (parts.length !== 3) return data;
-      const [ano, mes, dia] = parts;
-      return `${dia}/${mes}/${ano}`;
-    }
-
-    // ============= AUTENTICAÇÃO ============
     function login() {
       const u = document.getElementById('user').value.trim();
       const p = document.getElementById('pass').value.trim();
       if (u === LOGIN_USER && p === LOGIN_PASS) {
-        localStorage.setItem('logado', 'sim');
+        localStorage.setItem('logado','sim');
         document.getElementById('loginDiv').style.display = 'none';
         document.getElementById('panelDiv').style.display = 'block';
-        carregarAgendamentos(); // carregar dados ao entrar
+        carregarAgendamentos();
         showLoginNotice(null);
       } else {
         showLoginNotice('Usuário ou senha incorretos.');
@@ -222,133 +251,122 @@
       document.getElementById('loginDiv').style.display = 'block';
       document.getElementById('user').value = '';
       document.getElementById('pass').value = '';
-      ULTIMOS_AGENDAMENTOS = [];
+      FULL_AGENDAMENTOS = [];
+      SHOWN_AGENDAMENTOS = [];
     }
 
-    // ============= CARREGAR AGENDAMENTOS ============
+    // ============ CARREGAR & FILTRAR ============
     async function carregarAgendamentos() {
-      const filtroNome = document.getElementById('filtroNome').value.trim();
-      const filtroData = document.getElementById('filtroData').value;
-
-      // montar URL
-      let url = `${WEB_APP_URL}?acao=listarAgendamentos`;
-      if (filtroNome) url += `&filtroNome=${encodeURIComponent(filtroNome)}`;
-      if (filtroData) url += `&filtroData=${encodeURIComponent(filtroData)}`;
+      const filtroNome = (document.getElementById('filtroNome').value || '').trim();
+      const filtroData = document.getElementById('filtroData').value || '';
 
       const grid = document.getElementById('agendamentosGrid');
       grid.innerHTML = '<div class="empty-state">Carregando...</div>';
 
       try {
-        const res = await fetch(url);
+        // pede ao servidor todos (o filtro será aplicado localmente)
+        const res = await fetch(`${WEB_APP_URL}?acao=listarAgendamentos`);
         if (!res.ok) throw new Error('Resposta não OK: ' + res.status);
         const dados = await res.json();
-
         if (dados.status !== 'ok' || !Array.isArray(dados.agendamentos)) {
-          ULTIMOS_AGENDAMENTOS = [];
+          FULL_AGENDAMENTOS = [];
+          SHOWN_AGENDAMENTOS = [];
           grid.innerHTML = '<div class="empty-state">Nenhum agendamento encontrado</div>';
           atualizarEstatisticas([]);
           return;
         }
 
-        // filtrar agendamentos válidos
-        const ags = dados.agendamentos.filter(a => a && (a.nome || '').toString().trim() !== '');
-        ULTIMOS_AGENDAMENTOS = ags; // guarda para export
+        // normalizar todos os agendamentos
+        FULL_AGENDAMENTOS = dados.agendamentos.filter(a => a && (a.nome || '').toString().trim() !== '');
+        for (const ag of FULL_AGENDAMENTOS) normalizeAg(ag);
 
-        if (ags.length === 0) {
+        // aplicar filtros localmente
+        const nomeLower = filtroNome.toLowerCase();
+        SHOWN_AGENDAMENTOS = FULL_AGENDAMENTOS.filter(ag => {
+          const okNome = !filtroNome || ((ag.nome || '').toString().toLowerCase().includes(nomeLower));
+          const okData = !filtroData || (ag._dateISO === filtroData);
+          return okNome && okData;
+        });
+
+        // renderizar
+        if (SHOWN_AGENDAMENTOS.length === 0) {
           grid.innerHTML = '<div class="empty-state">Nenhum agendamento encontrado</div>';
-          atualizarEstatisticas([]);
-          return;
-        }
+        } else {
+          grid.innerHTML = SHOWN_AGENDAMENTOS.map(ag => {
+            const nome = escapeHtml(ag.nome || '');
+            const displayDate = escapeHtml(ag._displayDate || '');
+            const horario = escapeHtml(ag._timeHHMM || '');
+            const telefone = escapeHtml(ag.telefone || '');
+            const email = escapeHtml(ag.email || '');
+            const semana = escapeHtml(ag.semanaGestacao || '');
+            const obstetra = escapeHtml(ag.obstetra || '');
+            const plano = escapeHtml(ag.planoSaude || '');
+            const qualPlano = escapeHtml(ag.qualPlano || '');
+            const cidade = escapeHtml(ag.cidade || '');
+            const bairro = escapeHtml(ag.bairro || '');
+            const como = escapeHtml(ag.comoConheceu || '');
+            const obs = escapeHtml(ag.observacoes || '');
+            const status = escapeHtml(ag.status || 'Pendente');
 
-        // renderizar cards
-        grid.innerHTML = ags.map(ag => {
-          const nome = ag.nome || '';
-          const data = ag.data || '';
-          const horario = ag.horario || '';
-          const telefone = ag.telefone || '';
-          const email = ag.email || '';
-          const semanaGestacao = ag.semanaGestacao || '';
-          const obstetra = ag.obstetra || '';
-          const planoSaude = ag.planoSaude || '';
-          const qualPlano = ag.qualPlano || '';
-          const cidade = ag.cidade || '';
-          const bairro = ag.bairro || '';
-          const comoConheceu = ag.comoConheceu || '';
-          const observacoes = ag.observacoes || '';
-          const status = (ag.status || 'Pendente').toString();
+            const statusClass = status.toString().toLowerCase().includes('pend') ? 'status-pendente' : 'status-confirmado';
 
-          // badge class safe
-          const statusClass = status.toLowerCase().includes('pend') ? 'status-pendente' : 'status-confirmado';
+            return `
+              <div class="agendamento-card">
+                <div class="card-header">
+                  <h3 class="paciente-nome">${nome}</h3>
+                  <div class="agendamento-info"><span class="info-label">Data:</span> ${displayDate} ${horario ? 'às ' + horario : ''}</div>
+                </div>
 
-          return `
-            <div class="agendamento-card">
-              <div class="card-header">
-                <h3 class="paciente-nome">${escapeHtml(nome)}</h3>
-                <div class="agendamento-info"><span class="info-label">Data:</span> ${formatarData(escapeHtml(data))} ${horario ? 'às ' + escapeHtml(horario) : ''}</div>
+                <div class="agendamento-info"><span class="info-label">Telefone:</span> ${telefone}</div>
+                <div class="agendamento-info"><span class="info-label">Email:</span> ${email}</div>
+                <div class="agendamento-info"><span class="info-label">Semana de Gestação:</span> ${semana || 'Não informado'}</div>
+                <div class="agendamento-info"><span class="info-label">Obstetra:</span> ${obstetra || 'Não informado'}</div>
+                <div class="agendamento-info"><span class="info-label">Plano de Saúde:</span> ${plano || 'Não'} ${qualPlano ? '- ' + qualPlano : ''}</div>
+                <div class="agendamento-info"><span class="info-label">Localidade:</span> ${cidade || ''} ${cidade && bairro ? '- ' + bairro : bairro || ''}</div>
+                <div class="agendamento-info"><span class="info-label">Como conheceu:</span> ${como || 'Não informado'}</div>
+                ${obs ? `<div class="agendamento-info"><span class="info-label">Observações:</span> ${obs}</div>` : ''}
+                <div class="status-badge ${statusClass}">${status}</div>
               </div>
+            `;
+          }).join('');
+        }
 
-              <div class="agendamento-info"><span class="info-label">Telefone:</span> ${escapeHtml(telefone)}</div>
-              <div class="agendamento-info"><span class="info-label">Email:</span> ${escapeHtml(email)}</div>
-              <div class="agendamento-info"><span class="info-label">Semana de Gestação:</span> ${escapeHtml(semanaGestacao) || 'Não informado'}</div>
-              <div class="agendamento-info"><span class="info-label">Obstetra:</span> ${escapeHtml(obstetra) || 'Não informado'}</div>
-              <div class="agendamento-info"><span class="info-label">Plano de Saúde:</span> ${escapeHtml(planoSaude) || 'Não'} ${qualPlano ? '- ' + escapeHtml(qualPlano) : ''}</div>
-              <div class="agendamento-info"><span class="info-label">Localidade:</span> ${escapeHtml(cidade || '')} ${cidade && bairro ? '- ' + escapeHtml(bairro) : escapeHtml(bairro || '')}</div>
-              <div class="agendamento-info"><span class="info-label">Como conheceu:</span> ${escapeHtml(comoConheceu) || 'Não informado'}</div>
-              ${observacoes ? `<div class="agendamento-info"><span class="info-label">Observações:</span> ${escapeHtml(observacoes)}</div>` : ''}
-              <div class="status-badge ${statusClass}">${escapeHtml(status)}</div>
-            </div>
-          `;
-        }).join('');
-
-        atualizarEstatisticas(ags);
+        // estatísticas baseadas no conjunto completo (FULL_AGENDAMENTOS)
+        atualizarEstatisticas(FULL_AGENDAMENTOS);
       } catch (err) {
         console.error('Erro ao carregar agendamentos:', err);
         grid.innerHTML = '<div class="empty-state">Erro ao carregar agendamentos</div>';
         showPanelNotice('Erro ao carregar agendamentos. Veja console para detalhes.', 'error', 5000);
-        ULTIMOS_AGENDAMENTOS = [];
+        FULL_AGENDAMENTOS = [];
+        SHOWN_AGENDAMENTOS = [];
         atualizarEstatisticas([]);
       }
     }
 
-    // atualiza estatísticas com base na lista atual
-    function atualizarEstatisticas(agendamentos) {
-      const hoje = new Date().toISOString().split('T')[0];
-      const total = agendamentos.length;
-      const hojeCount = agendamentos.filter(a => (a.data || '') === hoje).length;
-      const pendentesCount = agendamentos.filter(a => (a.status || '').toString().toLowerCase().includes('pend')).length;
+    // ============ ESTATÍSTICAS ============
+    function atualizarEstatisticas(fullList) {
+      const todayISO = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+      const monthPrefix = todayISO.slice(0,7); // yyyy-mm
+
+      const total = fullList.length;
+      const hojeCount = fullList.filter(a => (a._dateISO === todayISO)).length;
+      const mesCount = fullList.filter(a => (a._dateISO || '').startsWith(monthPrefix)).length;
 
       document.getElementById('totalAgendamentos').textContent = total;
       document.getElementById('agendamentosHoje').textContent = hojeCount;
-      document.getElementById('agendamentosPendentes').textContent = pendentesCount;
+      document.getElementById('agendamentosNoMes').textContent = mesCount;
     }
 
-    // ============= EXPORTAR ============
+    // ============ EXPORTAÇÃO ============
     function exportarExcel() {
-      if (!Array.isArray(ULTIMOS_AGENDAMENTOS) || ULTIMOS_AGENDAMENTOS.length === 0) {
-        alert('Nenhum agendamento para exportar');
-        return;
-      }
+      const lista = Array.isArray(SHOWN_AGENDAMENTOS) ? SHOWN_AGENDAMENTOS : [];
+      if (lista.length === 0) { alert('Nenhum agendamento para exportar'); return; }
 
       const dados = [];
-      dados.push(['Nome', 'Data', 'Horário', 'Telefone', 'Email', 'Semana Gestação', 'Obstetra', 'Plano Saúde', 'Qual Plano', 'Cidade', 'Bairro', 'Como Conheceu', 'Observações', 'Status']);
+      dados.push(['Nome','Data','Horário','Telefone','Email','Semana Gestação','Obstetra','Plano Saúde','Qual Plano','Cidade','Bairro','Como Conheceu','Observações','Status']);
 
-      for (const ag of ULTIMOS_AGENDAMENTOS) {
-        dados.push([
-          ag.nome || '',
-          ag.data || '',
-          ag.horario || '',
-          ag.telefone || '',
-          ag.email || '',
-          ag.semanaGestacao || '',
-          ag.obstetra || '',
-          ag.planoSaude || '',
-          ag.qualPlano || '',
-          ag.cidade || '',
-          ag.bairro || '',
-          ag.comoConheceu || '',
-          ag.observacoes || '',
-          ag.status || 'Pendente'
-        ]);
+      for (const ag of lista) {
+        dados.push([ ag.nome||'', ag._dateISO||'', ag._timeHHMM||'', ag.telefone||'', ag.email||'', ag.semanaGestacao||'', ag.obstetra||'', ag.planoSaude||'', ag.qualPlano||'', ag.cidade||'', ag.bairro||'', ag.comoConheceu||'', ag.observacoes||'', ag.status||'Pendente' ]);
       }
 
       const wb = XLSX.utils.book_new();
@@ -357,35 +375,28 @@
       XLSX.writeFile(wb, `agendamentos_${new Date().toISOString().split('T')[0]}.xlsx`);
     }
 
-    // escape simples para evitar injeção de HTML
-    function escapeHtml(s) {
-      if (s === null || s === undefined) return '';
-      return String(s)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'", '&#39;');
+    // ============ UTIL/NOTICES ============
+    function showPanelNotice(msg, type='error', ms=4000) {
+      const el = document.getElementById('panelNotice');
+      el.className = 'notice ' + (type === 'success' ? 'success' : 'error');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(()=> el.style.display = 'none', ms);
     }
 
-    // ============= EVENTOS / INICIALIZAÇÃO ============
+    // ============ EVENTOS ============
     document.getElementById('loginBtn').addEventListener('click', login);
     document.getElementById('logoutBtn').addEventListener('click', logout);
     document.getElementById('aplicarFiltrosBtn').addEventListener('click', carregarAgendamentos);
     document.getElementById('exportBtn').addEventListener('click', exportarExcel);
+    document.getElementById('pass').addEventListener('keypress', function(e){ if (e.key === 'Enter') login(); });
 
     window.onload = function() {
-      // se já logado, mostra painel
       if (localStorage.getItem('logado') === 'sim') {
         document.getElementById('loginDiv').style.display = 'none';
         document.getElementById('panelDiv').style.display = 'block';
         carregarAgendamentos();
       }
-
-      // permitir Enter na senha
-      document.getElementById('pass').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') login();
-      });
     };
   </script>
 </body>
