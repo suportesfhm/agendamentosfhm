@@ -168,25 +168,6 @@
       border: 1px solid #f5c6cb;
     }
 
-    /* Debug Panel */
-    .debug-panel {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 15px 0;
-      font-family: monospace;
-      font-size: 12px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .debug-title {
-      font-weight: bold;
-      color: #d94f72;
-      margin-bottom: 8px;
-    }
-
     /* Responsividade: tudo full-width em telas estreitas */
     @media (max-width:800px){
       .form-grid{ grid-template-columns: 1fr; gap:14px; }
@@ -202,14 +183,6 @@
   <div class="container">
     <h1>Agende sua Visita</h1>
     <p class="lead">Teremos o maior prazer em receber você e um acompanhante para uma visita guiada à nossa maternidade. Durante o passeio, você conhecerá toda a estrutura, instalações e serviços oferecidos.</p>
-
-    <!-- Painel de Debug -->
-    <div class="span-12">
-      <div class="debug-panel">
-        <div class="debug-title">🐛 DEBUG CONSOLE</div>
-        <div id="debugOutput">Aguardando ação...</div>
-      </div>
-    </div>
 
     <form id="agendamentoForm" class="form-grid" novalidate>
       <!-- Linha 1 -->
@@ -324,16 +297,13 @@
         <button type="submit" id="submitBtn">
           <span class="btn-text">Agendar Visita</span>
         </button>
-        <button type="button" id="debugBtn" style="background: #6c757d; margin-left: 10px;">
-          🐛 Teste Debug
-        </button>
         <div class="small-note">* Campos obrigatórios</div>
       </div>
     </form>
   </div>
 
   <script>
-// URL DO WEB APP - ATUALIZADA
+// URL DO WEB APP
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQd7EL1Ia8IIpP1FRX1p3Tx_Inpwb49wk7Jja84bWu7xlzaH0572t5TUSPShclX4a7/exec";
 
 // Elementos do DOM
@@ -342,23 +312,9 @@ const inputData = document.getElementById('data');
 const submitBtn = document.getElementById('submitBtn');
 const btnText = submitBtn.querySelector('.btn-text');
 const messageContainer = document.getElementById('messageContainer');
-const debugOutput = document.getElementById('debugOutput');
-const debugBtn = document.getElementById('debugBtn');
-
-// ========== FUNÇÕES DE DEBUG ==========
-
-function logDebug(message) {
-  const timestamp = new Date().toLocaleTimeString();
-  const debugMessage = `[${timestamp}] ${message}`;
-  console.log(debugMessage);
-  debugOutput.innerHTML += debugMessage + '<br>';
-  debugOutput.scrollTop = debugOutput.scrollHeight;
-}
 
 // Função global para receber horários via JSONP
 window.handleHorarios = function(data) {
-  logDebug("📨 Resposta JSONP recebida: " + JSON.stringify(data));
-  
   if (data.status === 'ok' && Array.isArray(data.horarios)) {
     selectHorario.innerHTML = '<option value="">Selecione...</option>';
     
@@ -369,14 +325,11 @@ window.handleHorarios = function(data) {
         opt.textContent = h;
         selectHorario.appendChild(opt);
       });
-      logDebug("✅ Horários carregados: " + data.horarios.join(', '));
     } else {
       selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
-      logDebug("ℹ️ Sem horários disponíveis para esta data");
     }
   } else {
     selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
-    logDebug("❌ Erro na resposta: " + JSON.stringify(data));
   }
   
   selectHorario.disabled = false;
@@ -384,10 +337,7 @@ window.handleHorarios = function(data) {
 
 // Função global para receber resposta do agendamento
 window.handleAgendamento = function(data) {
-  logDebug("📨 Resposta do agendamento: " + JSON.stringify(data));
-  
   if (data.status === 'ok') {
-    logDebug("✅ Agendamento realizado com sucesso!");
     mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
     
     // Limpar formulário
@@ -398,14 +348,11 @@ window.handleAgendamento = function(data) {
     document.getElementById('field-qualplano').style.display = 'none';
     
   } else {
-    logDebug("❌ Erro do servidor: " + data.message);
     mostrarMensagem('❌ ' + (data.message || 'Erro ao realizar agendamento'), 'error');
   }
   
   setLoading(false);
 };
-
-// ========== FUNÇÕES PRINCIPAIS ==========
 
 // Mostrar/ocultar campo do plano de saúde
 document.getElementById('plano').addEventListener('change', function() {
@@ -445,8 +392,6 @@ document.getElementById('telefone').addEventListener('input', function(e) {
 
 // Carrega horários disponíveis quando muda a data usando JSONP
 function carregarHorariosParaData(dataSelecionada) {
-  logDebug("🔄 Carregando horários para data: " + dataSelecionada);
-  
   selectHorario.innerHTML = '<option value="">Carregando...</option>';
   selectHorario.disabled = true;
   
@@ -459,7 +404,6 @@ function carregarHorariosParaData(dataSelecionada) {
   try {
     // Usando JSONP para evitar CORS
     const url = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&callback=handleHorarios`;
-    logDebug("🔗 URL JSONP: " + url);
     
     // Remover script anterior se existir
     const scriptAntigo = document.getElementById('jsonp-script');
@@ -472,7 +416,6 @@ function carregarHorariosParaData(dataSelecionada) {
     script.id = 'jsonp-script';
     script.src = url;
     script.onerror = function() {
-      logDebug("❌ Erro ao carregar script JSONP");
       selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
       selectHorario.disabled = false;
     };
@@ -480,7 +423,6 @@ function carregarHorariosParaData(dataSelecionada) {
     document.head.appendChild(script);
     
   } catch (err) {
-    logDebug("💥 Erro ao carregar horários: " + err);
     selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
     selectHorario.disabled = false;
   }
@@ -513,16 +455,13 @@ function setLoading(loading) {
   }
 }
 
-// ========== ENVIO DO FORMULÁRIO COM DEBUG ==========
-
+// Envio do formulário
 document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  logDebug("=== 🚀 INICIANDO AGENDAMENTO ===");
   
   // Validação dos termos
   if (!document.getElementById('termos').checked) {
     mostrarMensagem('Você precisa aceitar os termos de uso antes de enviar.', 'error');
-    logDebug("❌ Termos não aceitos");
     return;
   }
 
@@ -543,15 +482,12 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     observacoes: document.getElementById('obs').value.trim()
   };
 
-  logDebug("📝 Dados coletados: " + JSON.stringify(dados));
-
   // Validar campos obrigatórios
   const camposObrigatorios = ['nome', 'email', 'telefone', 'data', 'horario', 'planoSaude', 'comoConheceu'];
   const camposVazios = camposObrigatorios.filter(campo => !dados[campo]);
   
   if (camposVazios.length > 0) {
     mostrarMensagem('Preencha todos os campos obrigatórios marcados com *', 'error');
-    logDebug("❌ Campos vazios: " + camposVazios.join(', '));
     return;
   }
 
@@ -559,16 +495,13 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(dados.email)) {
     mostrarMensagem('Por favor, insira um email válido', 'error');
-    logDebug("❌ Email inválido: " + dados.email);
     return;
   }
 
   setLoading(true);
   mostrarMensagem('', '');
 
-  logDebug("🔄 Enviando via GET parameters + JSONP...");
-
-  // Construir URL com parâmetros (encode todos os valores)
+  // Construir URL com parâmetros
   let urlParams = `nome=${encodeURIComponent(dados.nome)}`;
   urlParams += `&email=${encodeURIComponent(dados.email)}`;
   urlParams += `&telefone=${encodeURIComponent(dados.telefone)}`;
@@ -585,7 +518,6 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   urlParams += `&callback=handleAgendamento`;
 
   const urlComParams = `${WEB_APP_URL}?${urlParams}`;
-  logDebug("🔗 URL completa: " + urlComParams);
 
   // Remover script anterior se existir
   const scriptAntigo = document.getElementById('agendamento-script');
@@ -598,7 +530,6 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   script.id = 'agendamento-script';
   script.src = urlComParams;
   script.onerror = function() {
-    logDebug("❌ Erro ao carregar script de agendamento");
     mostrarMensagem('❌ Erro de conexão. Tente novamente.', 'error');
     setLoading(false);
   };
@@ -606,56 +537,7 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   document.head.appendChild(script);
 });
 
-// ========== BOTÃO DE DEBUG ==========
-
-debugBtn.addEventListener('click', function() {
-  logDebug("=== 🧪 TESTE DEBUG MANUAL ===");
-  
-  // Preencher dados de teste
-  document.getElementById('nome').value = 'Teste Debug';
-  document.getElementById('email').value = 'debug@teste.com';
-  document.getElementById('telefone').value = '(11) 99999-9999';
-  document.getElementById('gestacao').value = '30';
-  document.getElementById('obstetra').value = 'Dr. Teste';
-  document.getElementById('cidade').value = 'São Paulo';
-  document.getElementById('bairro').value = 'Centro';
-  document.getElementById('data').value = '2024-12-20';
-  document.getElementById('plano').value = 'Sim';
-  document.getElementById('qualplano').value = 'Unimed';
-  document.getElementById('conheceu').value = 'Indicação de amigo(a)';
-  document.getElementById('termos').checked = true;
-  
-  logDebug("✅ Formulário preenchido com dados de teste");
-  logDebug("💡 Agora clique em 'Agendar Visita' para testar o envio");
-});
-
-// ========== TESTES MANUAIS ==========
-
-// Teste de comunicação manual
-window.testarAgendamentoManual = function() {
-  logDebug("=== 🧪 TESTE MANUAL VIA URL ===");
-  
-  const urlTeste = `${WEB_APP_URL}?nome=TesteManual&email=manual@teste.com&telefone=11999999999&data=2024-12-20&horario=10:00&callback=handleAgendamento`;
-  logDebug("🔗 URL de teste: " + urlTeste);
-  
-  const script = document.createElement('script');
-  script.src = urlTeste;
-  document.head.appendChild(script);
-};
-
-// Teste de horários manual
-window.testarHorarios = function() {
-  const dataTeste = '2024-12-20';
-  logDebug("🧪 Testando horários para: " + dataTeste);
-  carregarHorariosParaData(dataTeste);
-};
-
-logDebug("✅ Página de agendamento carregada!");
-logDebug("🔗 Web App URL: " + WEB_APP_URL);
-logDebug("💡 Comandos de teste:");
-logDebug("   - testarHorarios() - Testa carregamento de horários");
-logDebug("   - testarAgendamentoManual() - Testa envio manual");
+console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
-
