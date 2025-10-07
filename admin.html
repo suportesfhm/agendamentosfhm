@@ -440,42 +440,41 @@
 
     /* --- CARREGAR AGENDAMENTOS --- */
     async function carregarAgendamentos() {
-      if (filtroNome && !(a.nome || "").toLowerCase().includes(filtroNome)) return false;
-      const filtroData = document.getElementById('filtroData').value;
-      
-      let url = `${WEB_APP_URL}?acao=listarAgendamentos`;
-      if (filtroNome) url += `&filtroNome=${encodeURIComponent(filtroNome)}`;
-      if (filtroData) url += `&filtroData=${encodeURIComponent(filtroData)}`;
+  const tabela = document.querySelector("#tabelaAgendamentos tbody");
+  tabela.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
 
-      try {
-        const res = await fetch(url);
-        const dados = await res.json();
-        
-        if (dados.status === 'ok') {
-          exibirAgendamentos(dados.agendamentos);
-          atualizarEstatisticas(dados.agendamentos);
-        } else {
-          mostrarErro('Erro ao carregar agendamentos');
-        }
-      } catch (err) {
-        console.error(err);
-        mostrarErro('Erro de conexão');
-      }
-    }
+  try {
+    const res = await fetch(`${WEB_APP_URL}?acao=listarAgendamentos`);
+    const dados = await res.json();
 
-    function exibirAgendamentos(agendamentos) {
-      const grid = document.getElementById('agendamentosGrid');
-      
-      if (!agendamentos || agendamentos.length === 0) {
-        grid.innerHTML = `
-          <div class="empty-state" style="grid-column: 1 / -1;">
-            <h3>Nenhum agendamento encontrado</h3>
-            <p>Tente ajustar os filtros ou aguarde novos agendamentos.</p>
-          </div>
-        `;
+    if (dados.status === "ok" && Array.isArray(dados.agendamentos)) {
+      const ags = dados.agendamentos.filter(a => a && a.nome); // evita registros vazios
+      if (ags.length === 0) {
+        tabela.innerHTML = "<tr><td colspan='6'>Nenhum agendamento encontrado</td></tr>";
         return;
       }
 
+      tabela.innerHTML = "";
+      ags.forEach(a => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${a.data || ""}</td>
+          <td>${a.horario || ""}</td>
+          <td>${a.nome || ""}</td>
+          <td>${a.telefone || ""}</td>
+          <td>${a.planoSaude || ""}</td>
+          <td>${a.comoConheceu || ""}</td>
+        `;
+        tabela.appendChild(tr);
+      });
+    } else {
+      tabela.innerHTML = "<tr><td colspan='6'>Nenhum agendamento encontrado</td></tr>";
+    }
+  } catch (err) {
+    console.error("❌ Erro ao carregar agendamentos:", err);
+    tabela.innerHTML = "<tr><td colspan='6'>Erro ao carregar agendamentos</td></tr>";
+  }
+}
       grid.innerHTML = agendamentos.map(ag => `
         <div class="agendamento-card">
           <div class="card-header">
@@ -602,6 +601,7 @@
   </script>
 </body>
 </html>
+
 
 
 
