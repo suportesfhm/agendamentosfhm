@@ -378,6 +378,29 @@ window.handleHorarios = function(data) {
   selectHorario.disabled = false;
 };
 
+// Função global para receber resposta do agendamento
+window.handleAgendamento = function(data) {
+  console.log("📨 Resposta do agendamento:", data);
+  
+  if (data.status === 'ok') {
+    console.log("✅ Agendamento realizado com sucesso!");
+    mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
+    
+    // Limpar formulário
+    document.getElementById('agendamentoForm').reset();
+    selectHorario.innerHTML = '<option value="">Selecione...</option>';
+    
+    // Ocultar campo do plano
+    document.getElementById('field-qualplano').style.display = 'none';
+    
+  } else {
+    console.error("❌ Erro do servidor:", data.message);
+    mostrarMensagem('❌ ' + (data.message || 'Erro ao realizar agendamento'), 'error');
+  }
+  
+  setLoading(false);
+};
+
 // Carrega horários disponíveis quando muda a data usando JSONP
 function carregarHorariosParaData(dataSelecionada) {
   console.log("🔄 Carregando horários para data:", dataSelecionada);
@@ -450,11 +473,11 @@ function setLoading(loading) {
   }
 }
 
-// ========== ENVIO DO FORMULÁRIO ==========
+// ========== ENVIO DO FORMULÁRIO VIA GET + JSONP ==========
 
-document.getElementById('agendamentoForm').addEventListener('submit', async function(e) {
+document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  console.log("=== INICIANDO AGENDAMENTO ===");
+  console.log("=== INICIANDO AGENDAMENTO VIA GET ===");
   
   // Validação dos termos
   if (!document.getElementById('termos').checked) {
@@ -500,92 +523,58 @@ document.getElementById('agendamentoForm').addEventListener('submit', async func
   setLoading(true);
   mostrarMensagem('', '');
 
-  console.log("🔄 Enviando para Web App...");
+  console.log("🔄 Enviando via GET parameters + JSONP...");
 
-  try {
-    const response = await fetch(WEB_APP_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dados)
-    });
+  // Construir URL com parâmetros (encode todos os valores)
+  let urlParams = `nome=${encodeURIComponent(dados.nome)}`;
+  urlParams += `&email=${encodeURIComponent(dados.email)}`;
+  urlParams += `&telefone=${encodeURIComponent(dados.telefone)}`;
+  urlParams += `&semanaGestacao=${encodeURIComponent(dados.semanaGestacao)}`;
+  urlParams += `&obstetra=${encodeURIComponent(dados.obstetra)}`;
+  urlParams += `&cidade=${encodeURIComponent(dados.cidade)}`;
+  urlParams += `&bairro=${encodeURIComponent(dados.bairro)}`;
+  urlParams += `&data=${encodeURIComponent(dados.data)}`;
+  urlParams += `&horario=${encodeURIComponent(dados.horario)}`;
+  urlParams += `&planoSaude=${encodeURIComponent(dados.planoSaude)}`;
+  urlParams += `&qualPlano=${encodeURIComponent(dados.qualPlano)}`;
+  urlParams += `&comoConheceu=${encodeURIComponent(dados.comoConheceu)}`;
+  urlParams += `&observacoes=${encodeURIComponent(dados.observacoes)}`;
+  urlParams += `&callback=handleAgendamento`;
 
-    console.log("📨 Status da resposta:", response.status);
-    console.log("📨 URL da resposta:", response.url);
-    
-    const textoResposta = await response.text();
-    console.log("📨 Texto da resposta:", textoResposta);
-    
-    let json;
-    try {
-      json = JSON.parse(textoResposta);
-      console.log("📨 JSON parseado:", json);
-    } catch (parseError) {
-      console.error("❌ Erro ao parsear JSON:", parseError);
-      throw new Error('Resposta inválida do servidor');
-    }
+  const urlComParams = `${WEB_APP_URL}?${urlParams}`;
+  console.log("🔗 URL com parâmetros:", urlComParams);
 
-    if (json.status === 'ok') {
-      console.log("✅ Agendamento realizado com sucesso!");
-      mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
-      
-      // Limpar formulário
-      this.reset();
-      selectHorario.innerHTML = '<option value="">Selecione...</option>';
-      
-      // Ocultar campo do plano
-      document.getElementById('field-qualplano').style.display = 'none';
-      
-    } else {
-      console.error("❌ Erro do servidor:", json.message);
-      mostrarMensagem('❌ ' + (json.message || 'Erro ao realizar agendamento'), 'error');
-    }
-  } catch (err) {
-    console.error('💥 Erro completo:', err);
-    console.error('💥 Tipo do erro:', err.name);
-    console.error('💥 Mensagem do erro:', err.message);
-    
-    mostrarMensagem('❌ Erro de comunicação. Verifique sua conexão e tente novamente.', 'error');
-  } finally {
-    setLoading(false);
+  // Remover script anterior se existir
+  const scriptAntigo = document.getElementById('agendamento-script');
+  if (scriptAntigo) {
+    scriptAntigo.remove();
   }
+  
+  // Criar script para JSONP
+  const script = document.createElement('script');
+  script.id = 'agendamento-script';
+  script.src = urlComParams;
+  script.onerror = function() {
+    console.error("❌ Erro ao enviar agendamento");
+    mostrarMensagem('❌ Erro de conexão. Tente novamente.', 'error');
+    setLoading(false);
+  };
+  
+  document.head.appendChild(script);
 });
 
 // ========== FUNÇÕES DE TESTE ==========
 
 // Teste de comunicação manual (para debug)
-window.testarComunicacao = async function() {
-  console.log("🧪 Testando comunicação com Web App...");
+window.testarAgendamento = function() {
+  console.log("🧪 Testando agendamento manual...");
   
-  const dadosTeste = {
-    nome: "Teste Silva",
-    email: "teste@email.com",
-    telefone: "(11) 99999-9999",
-    semanaGestacao: "30",
-    obstetra: "Dr. Teste",
-    cidade: "São Paulo",
-    bairro: "Centro",
-    data: "2024-12-20",
-    horario: "10:00",
-    planoSaude: "Sim",
-    qualPlano: "Unimed",
-    comoConheceu: "Indicação",
-    observacoes: "Teste de agendamento"
-  };
-
-  try {
-    const response = await fetch(WEB_APP_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(dadosTeste)
-    });
-
-    console.log("🧪 Status:", response.status);
-    console.log("🧪 Resposta:", await response.text());
-  } catch (error) {
-    console.error("🧪 Erro:", error);
-  }
+  const urlTeste = `${WEB_APP_URL}?nome=Teste%20Silva&email=teste@email.com&telefone=11999999999&data=2024-12-20&horario=10:00&callback=handleAgendamento`;
+  console.log("🔗 URL de teste:", urlTeste);
+  
+  const script = document.createElement('script');
+  script.src = urlTeste;
+  document.head.appendChild(script);
 };
 
 // Teste de horários manual
@@ -599,7 +588,7 @@ console.log("✅ Página de agendamento carregada!");
 console.log("🔗 Web App URL:", WEB_APP_URL);
 console.log("💡 Dicas de teste:");
 console.log("   - testarHorarios() - Testa carregamento de horários");
-console.log("   - testarComunicacao() - Testa envio de agendamento");
+console.log("   - testarAgendamento() - Testa envio de agendamento");
   </script>
 </body>
 </html>
