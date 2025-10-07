@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Agende sua Visita</title>
+  <title>Agende sua Visita - Maternidade</title>
   <style>
     :root{
       --container-width: 980px;
@@ -233,8 +233,6 @@
         <label for="horario">Horário *</label>
         <select id="horario" name="horario" required>
           <option value="">Selecione...</option>
-          <option value="10:00">10:00</option>
-          <option value="15:00">15:00</option>
         </select>
       </div>
 
@@ -247,7 +245,7 @@
         </select>
       </div>
 
-      <div class="field span-3" id="field-qualplano">
+      <div class="field span-3" id="field-qualplano" style="display:none;">
         <label for="qualplano">Se sim, qual?</label>
         <input id="qualplano" name="qualplano" type="text">
       </div>
@@ -305,9 +303,10 @@
   </div>
 
   <script>
-// URL DO WEB APP - USE A SUA URL AQUI
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby_Mdd_rG0hsKAUKISLFBoRw_1n1WuMzGHZovqED9G_pSM_L-FhlXt3osjVxFGXK-QU/exec";
+// URL DO WEB APP - ATUALIZADA
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx1qSBWaARunY6O_FHLkO1sjwJJAYmMycx2ogw55jVjz00Ean14_H0Kr_srkMd4TcFX/exec";
 
+// Elementos do DOM
 const selectHorario = document.getElementById('horario');
 const inputData = document.getElementById('data');
 const submitBtn = document.getElementById('submitBtn');
@@ -350,8 +349,37 @@ document.getElementById('telefone').addEventListener('input', function(e) {
   }
 });
 
-// Carrega horários disponíveis quando muda a data
-async function carregarHorariosParaData(dataSelecionada) {
+// ========== FUNÇÕES JSONP ==========
+
+// Função global para receber horários via JSONP
+window.handleHorarios = function(data) {
+  console.log("📨 Resposta JSONP recebida:", data);
+  
+  if (data.status === 'ok' && Array.isArray(data.horarios)) {
+    selectHorario.innerHTML = '<option value="">Selecione...</option>';
+    
+    if (data.horarios.length > 0) {
+      data.horarios.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h;
+        selectHorario.appendChild(opt);
+      });
+      console.log("✅ Horários carregados:", data.horarios);
+    } else {
+      selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
+      console.log("ℹ️ Sem horários disponíveis para esta data");
+    }
+  } else {
+    selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
+    console.error("❌ Erro na resposta:", data);
+  }
+  
+  selectHorario.disabled = false;
+};
+
+// Carrega horários disponíveis quando muda a data usando JSONP
+function carregarHorariosParaData(dataSelecionada) {
   console.log("🔄 Carregando horários para data:", dataSelecionada);
   
   selectHorario.innerHTML = '<option value="">Carregando...</option>';
@@ -364,43 +392,27 @@ async function carregarHorariosParaData(dataSelecionada) {
   }
 
   try {
-    const response = await fetch(`${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}`);
-    console.log("📨 Resposta dos horários:", response.status);
+    // Usando JSONP para evitar CORS
+    const url = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&callback=handleHorarios`;
+    console.log("🔗 URL JSONP:", url);
     
-    const textoResposta = await response.text();
-    console.log("📨 Texto da resposta:", textoResposta);
+    // Remover script anterior se existir
+    const scriptAntigo = document.getElementById('jsonp-script');
+    if (scriptAntigo) {
+      scriptAntigo.remove();
+    }
     
-    let dados;
-    try {
-      dados = JSON.parse(textoResposta);
-    } catch (parseError) {
-      console.error("❌ Erro ao parsear JSON:", parseError);
-      selectHorario.innerHTML = '<option value="">Erro ao carregar</option>';
+    // Criar novo script para JSONP
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = url;
+    script.onerror = function() {
+      console.error("❌ Erro ao carregar script JSONP");
+      selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
       selectHorario.disabled = false;
-      return;
-    }
-
-    if (dados.status === 'ok' && Array.isArray(dados.horarios)) {
-      selectHorario.innerHTML = '<option value="">Selecione...</option>';
-      
-      if (dados.horarios.length > 0) {
-        dados.horarios.forEach(h => {
-          const opt = document.createElement('option');
-          opt.value = h;
-          opt.textContent = h;
-          selectHorario.appendChild(opt);
-        });
-        console.log("✅ Horários carregados:", dados.horarios);
-      } else {
-        selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
-        console.log("ℹ️ Sem horários disponíveis para esta data");
-      }
-    } else {
-      selectHorario.innerHTML = '<option value="">Erro ao carregar</option>';
-      console.error("❌ Erro na resposta:", dados);
-    }
+    };
     
-    selectHorario.disabled = false;
+    document.head.appendChild(script);
     
   } catch (err) {
     console.error("💥 Erro ao carregar horários:", err);
@@ -414,10 +426,7 @@ inputData.addEventListener('change', function() {
   carregarHorariosParaData(this.value);
 });
 
-// Se já houver data preenchida, carrega os horários
-if (inputData.value) {
-  carregarHorariosParaData(inputData.value);
-}
+// ========== FUNÇÕES DE INTERFACE ==========
 
 // Mostrar mensagem
 function mostrarMensagem(mensagem, tipo) {
@@ -441,7 +450,8 @@ function setLoading(loading) {
   }
 }
 
-/* Envio do formulário */
+// ========== ENVIO DO FORMULÁRIO ==========
+
 document.getElementById('agendamentoForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   console.log("=== INICIANDO AGENDAMENTO ===");
@@ -542,6 +552,8 @@ document.getElementById('agendamentoForm').addEventListener('submit', async func
   }
 });
 
+// ========== FUNÇÕES DE TESTE ==========
+
 // Teste de comunicação manual (para debug)
 window.testarComunicacao = async function() {
   console.log("🧪 Testando comunicação com Web App...");
@@ -576,10 +588,18 @@ window.testarComunicacao = async function() {
   }
 };
 
+// Teste de horários manual
+window.testarHorarios = function() {
+  const dataTeste = '2024-12-20';
+  console.log("🧪 Testando horários para:", dataTeste);
+  carregarHorariosParaData(dataTeste);
+};
+
 console.log("✅ Página de agendamento carregada!");
 console.log("🔗 Web App URL:", WEB_APP_URL);
-console.log("💡 Dica: Use testarComunicacao() no console para testar manualmente");
+console.log("💡 Dicas de teste:");
+console.log("   - testarHorarios() - Testa carregamento de horários");
+console.log("   - testarComunicacao() - Testa envio de agendamento");
   </script>
 </body>
 </html>
-
