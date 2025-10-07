@@ -26,16 +26,13 @@
       padding: 20px;
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    /* LOGIN STYLES - Melhorados */
+    /* LOGIN STYLES - Corrigido */
     .login-container {
       max-width: 400px;
       width: 90%;
-      margin: 20px auto;
+      margin: 40px auto;
       background: var(--card-bg);
       padding: 40px 30px;
       border-radius: 20px;
@@ -50,7 +47,7 @@
     .login-icon {
       width: 80px;
       height: 80px;
-      background: linear-gradient(135deg, var(--accent), var(--btn));
+      background: var(--accent);
       border-radius: 50%;
       margin: 0 auto 20px;
       display: flex;
@@ -109,7 +106,7 @@
     .login-btn {
       width: 100%;
       padding: 15px;
-      background: linear-gradient(135deg, var(--accent), var(--btn));
+      background: var(--accent);
       color: white;
       border: none;
       border-radius: 12px;
@@ -125,7 +122,7 @@
       box-shadow: 0 8px 20px rgba(217, 79, 114, 0.3);
     }
 
-    /* PANEL STYLES (mantidos os originais) */
+    /* PANEL STYLES */
     .panel-container {
       max-width: 1200px;
       width: 95%;
@@ -329,15 +326,14 @@
       color: var(--light-text);
     }
 
-    .empty-state img {
-      max-width: 200px;
+    .export-section {
+      text-align: right;
       margin-bottom: 20px;
-      opacity: 0.5;
     }
   </style>
 </head>
 <body>
-  <!-- Tela de Login Melhorada -->
+  <!-- Tela de Login -->
   <div class="login-container" id="loginDiv">
     <div class="login-header">
       <div class="login-icon">🔐</div>
@@ -368,13 +364,55 @@
 
     <h1>Painel de Controle - Agendamentos</h1>
 
-    <!-- Resto do código do painel permanece igual -->
-    <!-- ... -->
+    <!-- Estatísticas -->
+    <div class="stats-container" id="statsContainer">
+      <div class="stat-card">
+        <div class="stat-label">Total de Agendamentos</div>
+        <div class="stat-number" id="totalAgendamentos">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Agendamentos Hoje</div>
+        <div class="stat-number" id="agendamentosHoje">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pendentes</div>
+        <div class="stat-number" id="agendamentosPendentes">0</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-container">
+      <div class="field">
+        <label for="filtroNome">Filtrar por Nome:</label>
+        <input type="text" id="filtroNome" placeholder="Digite o nome do paciente">
+      </div>
+      <div class="field">
+        <label for="filtroData">Filtrar por Data:</label>
+        <input type="date" id="filtroData">
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button type="button" onclick="aplicarFiltros()">Aplicar Filtros</button>
+      </div>
+    </div>
+
+    <!-- Botão Exportar -->
+    <div class="export-section">
+      <button type="button" onclick="exportarExcel()" class="btn-green">
+        📊 Exportar para Excel
+      </button>
+    </div>
+
+    <!-- Lista de Agendamentos -->
+    <div id="agendamentosContainer">
+      <div class="agendamentos-grid" id="agendamentosGrid"></div>
+    </div>
+
+    <div class="notice" id="panelNotice" style="display:none;"></div>
   </div>
 
   <script>
-    // O resto do JavaScript permanece igual
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz2IC5qOGwkNec4Egc0iob7YCZsSWdV_lVRW4dhRn8V9tb6gVFXJJE4Tz0ACnI83JQo/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQd7EL1Ia8IIpP1FRX1p3Tx_Inpwb49wk7Jja84bWu7xlzaH0572t5TUSPShclX4a7/exec";
     const LOGIN_USER = "admin";
     const LOGIN_PASS = "1234";
 
@@ -396,13 +434,171 @@
       localStorage.removeItem('logado');
       document.getElementById('panelDiv').style.display = 'none';
       document.getElementById('loginDiv').style.display = 'block';
-      // Limpar campos do login
       document.getElementById('user').value = '';
       document.getElementById('pass').value = '';
     }
 
-    // O resto das funções JavaScript permanecem iguais...
-    // ... (mantenha todas as outras funções do admin)
+    /* --- CARREGAR AGENDAMENTOS --- */
+    async function carregarAgendamentos() {
+      const filtroNome = document.getElementById('filtroNome').value;
+      const filtroData = document.getElementById('filtroData').value;
+      
+      let url = `${WEB_APP_URL}?acao=listarAgendamentos`;
+      if (filtroNome) url += `&filtroNome=${encodeURIComponent(filtroNome)}`;
+      if (filtroData) url += `&filtroData=${encodeURIComponent(filtroData)}`;
+
+      try {
+        const res = await fetch(url);
+        const dados = await res.json();
+        
+        if (dados.status === 'ok') {
+          exibirAgendamentos(dados.agendamentos);
+          atualizarEstatisticas(dados.agendamentos);
+        } else {
+          mostrarErro('Erro ao carregar agendamentos');
+        }
+      } catch (err) {
+        console.error(err);
+        mostrarErro('Erro de conexão');
+      }
+    }
+
+    function exibirAgendamentos(agendamentos) {
+      const grid = document.getElementById('agendamentosGrid');
+      
+      if (!agendamentos || agendamentos.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>Nenhum agendamento encontrado</h3>
+            <p>Tente ajustar os filtros ou aguarde novos agendamentos.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = agendamentos.map(ag => `
+        <div class="agendamento-card">
+          <div class="card-header">
+            <h3 class="paciente-nome">${ag.nome}</h3>
+            <div class="agendamento-info">
+              <span class="info-label">Data:</span> ${formatarData(ag.data)} às ${ag.horario}
+            </div>
+          </div>
+          
+          <div class="agendamento-info">
+            <span class="info-label">Telefone:</span> ${ag.telefone}
+          </div>
+          <div class="agendamento-info">
+            <span class="info-label">Email:</span> ${ag.email}
+          </div>
+          <div class="agendamento-info">
+            <span class="info-label">Semana de Gestação:</span> ${ag.semanaGestacao || 'Não informado'}
+          </div>
+          <div class="agendamento-info">
+            <span class="info-label">Obstetra:</span> ${ag.obstetra || 'Não informado'}
+          </div>
+          <div class="agendamento-info">
+            <span class="info-label">Plano de Saúde:</span> ${ag.planoSaude || 'Não'} ${ag.qualPlano ? `- ${ag.qualPlano}` : ''}
+          </div>
+          <div class="agendamento-info">
+            <span class="info-label">Localidade:</span> ${ag.cidade || ''} - ${ag.bairro || ''}
+          </div>
+          <div class="agendamento-info">
+            <span class="info-label">Como conheceu:</span> ${ag.comoConheceu || 'Não informado'}
+          </div>
+          ${ag.observacoes ? `
+          <div class="agendamento-info">
+            <span class="info-label">Observações:</span> ${ag.observacoes}
+          </div>
+          ` : ''}
+          
+          <div class="status-badge status-${ag.status.toLowerCase()}">
+            ${ag.status}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function atualizarEstatisticas(agendamentos) {
+      const hoje = new Date().toISOString().split('T')[0];
+      
+      const total = agendamentos.length;
+      const hojeCount = agendamentos.filter(a => a.data === hoje).length;
+      const pendentesCount = agendamentos.filter(a => a.status === 'Pendente').length;
+      
+      document.getElementById('totalAgendamentos').textContent = total;
+      document.getElementById('agendamentosHoje').textContent = hojeCount;
+      document.getElementById('agendamentosPendentes').textContent = pendentesCount;
+    }
+
+    function formatarData(data) {
+      if (!data) return '';
+      const [ano, mes, dia] = data.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function aplicarFiltros() {
+      carregarAgendamentos();
+    }
+
+    function exportarExcel() {
+      const agendamentosGrid = document.getElementById('agendamentosGrid');
+      const cards = agendamentosGrid.getElementsByClassName('agendamento-card');
+      
+      if (cards.length === 0) {
+        alert('Nenhum agendamento para exportar');
+        return;
+      }
+
+      const dados = [];
+      dados.push(['Nome', 'Data', 'Horário', 'Telefone', 'Email', 'Semana Gestação', 'Obstetra', 'Plano Saúde', 'Qual Plano', 'Cidade', 'Bairro', 'Como Conheceu', 'Observações', 'Status']);
+      
+      for (let card of cards) {
+        const nome = card.querySelector('.paciente-nome').textContent;
+        const dataHora = card.querySelector('.agendamento-info').textContent.replace('Data:', '').trim();
+        const [data, horario] = dataHora.split(' às ');
+        
+        const infos = card.querySelectorAll('.agendamento-info');
+        const telefone = infos[1].textContent.replace('Telefone:', '').trim();
+        const email = infos[2].textContent.replace('Email:', '').trim();
+        const semanaGestacao = infos[3].textContent.replace('Semana de Gestação:', '').trim();
+        const obstetra = infos[4].textContent.replace('Obstetra:', '').trim();
+        const planoSaude = infos[5].textContent.replace('Plano de Saúde:', '').trim();
+        const localidade = infos[6].textContent.replace('Localidade:', '').trim();
+        const [cidade, bairro] = localidade.split(' - ');
+        const comoConheceu = infos[7].textContent.replace('Como conheceu:', '').trim();
+        const observacoes = infos[8] ? infos[8].textContent.replace('Observações:', '').trim() : '';
+        const status = card.querySelector('.status-badge').textContent;
+        
+        dados.push([nome, data, horario, telefone, email, semanaGestacao, obstetra, planoSaude, '', cidade, bairro, comoConheceu, observacoes, status]);
+      }
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(dados);
+      XLSX.utils.book_append_sheet(wb, ws, 'Agendamentos');
+      XLSX.writeFile(wb, `agendamentos_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    function mostrarErro(mensagem) {
+      const notice = document.getElementById('panelNotice');
+      notice.textContent = mensagem;
+      notice.className = 'notice error';
+      notice.style.display = 'block';
+      setTimeout(() => notice.style.display = 'none', 5000);
+    }
+
+    // Inicialização
+    window.onload = function() {
+      if (localStorage.getItem('logado') === 'sim') {
+        document.getElementById('loginDiv').style.display = 'none';
+        document.getElementById('panelDiv').style.display = 'block';
+        carregarAgendamentos();
+      }
+      
+      document.getElementById('pass').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') login();
+      });
+    };
   </script>
 </body>
 </html>
