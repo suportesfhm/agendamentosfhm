@@ -313,29 +313,6 @@ const submitBtn = document.getElementById('submitBtn');
 const btnText = submitBtn.querySelector('.btn-text');
 const messageContainer = document.getElementById('messageContainer');
 
-// Função para obter horários base baseado no dia da semana
-function obterHorariosBase(dataSelecionada) {
-  if (!dataSelecionada) return [];
-  
-  const dataObj = new Date(dataSelecionada + 'T00:00:00');
-  const diaSemana = dataObj.getDay();
-  
-  switch (diaSemana) {
-    case 0: // Domingo
-      return ["10:00"];
-    case 1: // Segunda
-    case 2: // Terça  
-    case 3: // Quarta
-    case 5: // Sexta
-      return ["10:00", "15:00"];
-    case 6: // Sábado
-      return ["15:00"];
-    case 4: // Quinta (fechado)
-    default:
-      return [];
-  }
-}
-
 // Função para carregar horários disponíveis
 function carregarHorariosParaData(dataSelecionada) {
   selectHorario.innerHTML = '<option value="">Carregando...</option>';
@@ -358,25 +335,93 @@ function carregarHorariosParaData(dataSelecionada) {
     return;
   }
 
-  // Usar apenas as regras locais de horários
-  setTimeout(() => {
-    const horariosBase = obterHorariosBase(dataSelecionada);
-    
-    selectHorario.innerHTML = '<option value="">Selecione...</option>';
-    
-    if (horariosBase.length > 0) {
-      horariosBase.forEach(h => {
-        const opt = document.createElement('option');
-        opt.value = h;
-        opt.textContent = h;
-        selectHorario.appendChild(opt);
-      });
-    } else {
-      selectHorario.innerHTML = '<option value="">Não há atendimento neste dia</option>';
-    }
-    
-    selectHorario.disabled = false;
-  }, 300);
+  // Primeiro tentar buscar do App Script
+  buscarHorariosDoAppScript(dataSelecionada);
+}
+
+// Buscar horários do App Script
+function buscarHorariosDoAppScript(dataSelecionada) {
+  const timestamp = Date.now();
+  const url = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&t=${timestamp}`;
+  
+  console.log("🔍 Buscando horários do App Script:", url);
+  
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error('Erro na resposta');
+      return response.json();
+    })
+    .then(data => {
+      console.log("✅ Resposta do App Script:", data);
+      
+      if (data.status === 'ok' && Array.isArray(data.horarios)) {
+        // Usar horários do App Script
+        preencherHorariosSelect(data.horarios, "App Script");
+      } else {
+        // Se erro, usar fallback
+        console.warn("❌ Erro na resposta, usando fallback");
+        usarFallbackHorarios(dataSelecionada);
+      }
+    })
+    .catch(error => {
+      console.error("❌ Erro ao buscar horários:", error);
+      // Em caso de erro, usar fallback
+      usarFallbackHorarios(dataSelecionada);
+    });
+}
+
+// Usar fallback com regras locais
+function usarFallbackHorarios(dataSelecionada) {
+  console.log("🔄 Usando fallback para horários");
+  const horariosBase = obterHorariosBase(dataSelecionada);
+  preencherHorariosSelect(horariosBase, "Fallback");
+}
+
+// Preencher o select com horários
+function preencherHorariosSelect(horarios, fonte) {
+  console.log(`📋 Preenchendo horários (fonte: ${fonte}):`, horarios);
+  
+  selectHorario.innerHTML = '<option value="">Selecione...</option>';
+  
+  if (horarios.length > 0) {
+    horarios.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = h;
+      selectHorario.appendChild(opt);
+    });
+    console.log(`✅ Horários carregados: ${horarios.join(', ')}`);
+  } else {
+    selectHorario.innerHTML = '<option value="">Não há horários disponíveis</option>';
+    console.log("❌ Nenhum horário disponível");
+  }
+  
+  selectHorario.disabled = false;
+}
+
+// Função FALLBACK para obter horários base
+function obterHorariosBase(dataSelecionada) {
+  if (!dataSelecionada) return [];
+  
+  const dataObj = new Date(dataSelecionada + 'T00:00:00');
+  const diaSemana = dataObj.getDay();
+  
+  console.log(`📅 Fallback: Data ${dataSelecionada}, Dia ${diaSemana}`);
+  
+  switch (diaSemana) {
+    case 0: // Domingo
+      return ["10:00"];
+    case 1: // Segunda
+    case 2: // Terça  
+    case 3: // Quarta
+    case 5: // Sexta
+      return ["10:00", "15:00"];
+    case 6: // Sábado
+      return ["15:00"];
+    case 4: // Quinta (fechado)
+    default:
+      return [];
+  }
 }
 
 // Mostrar/ocultar campo do plano de saúde
@@ -588,4 +633,3 @@ console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
-
