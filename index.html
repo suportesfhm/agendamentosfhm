@@ -313,50 +313,7 @@ const submitBtn = document.getElementById('submitBtn');
 const btnText = submitBtn.querySelector('.btn-text');
 const messageContainer = document.getElementById('messageContainer');
 
-// Armazenamento local para simular o banco de dados
-let agendamentosLocal = JSON.parse(localStorage.getItem('agendamentos_maternidade')) || [];
-
-// Função para salvar agendamentos no localStorage
-function salvarAgendamentoLocal(dados) {
-  agendamentosLocal.push({
-    id: Date.now(),
-    ...dados,
-    dataCriacao: new Date().toISOString()
-  });
-  localStorage.setItem('agendamentos_maternidade', JSON.stringify(agendamentosLocal));
-}
-
-// Função para obter horários base baseado no dia da semana
-function obterHorariosBase(dataSelecionada) {
-  if (!dataSelecionada) return [];
-  
-  const dataObj = new Date(dataSelecionada + 'T00:00:00');
-  const diaSemana = dataObj.getDay();
-  
-  switch (diaSemana) {
-    case 0: // Domingo
-      return ["10:00"];
-    case 1: // Segunda
-    case 2: // Terça  
-    case 3: // Quarta
-    case 5: // Sexta
-      return ["10:00", "15:00"];
-    case 6: // Sábado
-      return ["15:00"];
-    case 4: // Quinta (fechado)
-    default:
-      return [];
-  }
-}
-
-// Função para contar agendamentos existentes por data e horário
-function contarAgendamentos(data, horario) {
-  return agendamentosLocal.filter(ag => 
-    ag.data === data && ag.horario === horario
-  ).length;
-}
-
-// Função para carregar horários disponíveis
+// Função para carregar horários disponíveis do App Script
 function carregarHorariosParaData(dataSelecionada) {
   selectHorario.innerHTML = '<option value="">Carregando...</option>';
   selectHorario.disabled = true;
@@ -367,6 +324,7 @@ function carregarHorariosParaData(dataSelecionada) {
     return;
   }
 
+  // Verificar se a data é no passado
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   const dataSelecionadaObj = new Date(dataSelecionada + 'T00:00:00');
@@ -377,34 +335,43 @@ function carregarHorariosParaData(dataSelecionada) {
     return;
   }
 
-  setTimeout(() => {
-    const horariosBase = obterHorariosBase(dataSelecionada);
-    const horariosDisponiveis = [];
-    
-    horariosBase.forEach(horario => {
-      const count = contarAgendamentos(dataSelecionada, horario);
-      if (count < 5) {
-        horariosDisponiveis.push(horario);
-      }
-    });
+  // Buscar horários disponíveis do App Script
+  const callbackName = 'horariosCallback_' + Date.now();
+  
+  window[callbackName] = function(response) {
+    console.log("Resposta horários:", response);
     
     selectHorario.innerHTML = '<option value="">Selecione...</option>';
     
-    if (horariosDisponiveis.length > 0) {
-      horariosDisponiveis.forEach(h => {
-        const opt = document.createElement('option');
-        opt.value = h;
-        opt.textContent = h;
-        selectHorario.appendChild(opt);
-      });
-    } else if (horariosBase.length === 0) {
-      selectHorario.innerHTML = '<option value="">Não há atendimento neste dia</option>';
+    if (response.status === 'ok' && Array.isArray(response.horarios)) {
+      if (response.horarios.length > 0) {
+        response.horarios.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = h;
+          selectHorario.appendChild(opt);
+        });
+      } else {
+        selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
+      }
     } else {
-      selectHorario.innerHTML = '<option value="">Horários lotados</option>';
+      selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
     }
     
     selectHorario.disabled = false;
-  }, 500);
+    delete window[callbackName];
+  };
+
+  // Fazer requisição para o App Script
+  const script = document.createElement('script');
+  script.src = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&callback=${callbackName}`;
+  script.onerror = function() {
+    selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
+    selectHorario.disabled = false;
+    delete window[callbackName];
+  };
+  
+  document.head.appendChild(script);
 }
 
 // Mostrar/ocultar campo do plano de saúde
@@ -474,6 +441,7 @@ function setLoading(loading) {
 document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
+  // Validação dos termos
   if (!document.getElementById('termos').checked) {
     mostrarMensagem('Você precisa aceitar os termos de uso antes de enviar.', 'error');
     return;
@@ -519,6 +487,7 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     console.log("Campos vazios:", camposVazios);
     mostrarMensagem('Preencha todos os campos obrigatórios marcados com *', 'error');
     
+    // Destacar campos vazios
     camposVazios.forEach(item => {
       if (item.elemento) {
         item.elemento.style.borderColor = 'red';
@@ -528,6 +497,7 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     return;
   }
 
+  // Validar email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(dados.email)) {
     mostrarMensagem('Por favor, insira um email válido', 'error');
@@ -535,18 +505,8 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     return;
   }
 
-  const count = contarAgendamentos(dados.data, dados.horario);
-  if (count >= 5) {
-    mostrarMensagem('❌ Desculpe, este horário acabou de ficar lotado. Por favor, selecione outro horário.', 'error');
-    carregarHorariosParaData(dados.data);
-    return;
-  }
-
   setLoading(true);
 
-  // Salvar localmente
-  salvarAgendamentoLocal(dados);
-  
   // Enviar para Google Apps Script usando JSONP
   enviarParaGoogleAppsScript(dados);
 });
@@ -583,18 +543,15 @@ function enviarParaGoogleAppsScript(dados) {
     
     if (response.status === 'ok') {
       mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
+      // Limpar formulário
       document.getElementById('agendamentoForm').reset();
       document.getElementById('field-qualplano').style.display = 'none';
+      // Limpar bordas vermelhas
       document.querySelectorAll('input, select').forEach(el => {
         el.style.borderColor = '';
       });
     } else {
-      mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
-      document.getElementById('agendamentoForm').reset();
-      document.getElementById('field-qualplano').style.display = 'none';
-      document.querySelectorAll('input, select').forEach(el => {
-        el.style.borderColor = '';
-      });
+      mostrarMensagem('❌ ' + (response.message || 'Erro ao realizar agendamento'), 'error');
     }
     
     // Limpar callback
@@ -607,12 +564,7 @@ function enviarParaGoogleAppsScript(dados) {
   script.src = urlComParams;
   script.onerror = function() {
     console.error("Erro na requisição JSONP");
-    mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
-    document.getElementById('agendamentoForm').reset();
-    document.getElementById('field-qualplano').style.display = 'none';
-    document.querySelectorAll('input, select').forEach(el => {
-      el.style.borderColor = '';
-    });
+    mostrarMensagem('❌ Erro de conexão. Tente novamente.', 'error');
     delete window[callbackName];
     setLoading(false);
   };
