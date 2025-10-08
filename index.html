@@ -339,7 +339,7 @@ function carregarHorariosParaData(dataSelecionada) {
     return;
   }
 
-  const url = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&callback=handleHorarios&_=${Date.now()}`;
+  const url = `${WEB_APP_URL}?data=${encodeURIComponent(dataSelecionada)}&callback=handleHorarios&_=${Date.now()}`;
 
   const old = document.getElementById('jsonp-script');
   if (old) old.remove();
@@ -443,3 +443,4 @@ console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
+
