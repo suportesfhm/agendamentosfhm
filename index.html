@@ -332,34 +332,59 @@ window.handleAgendamento = function(data) {
 function carregarHorariosParaData(dataSelecionada) {
   selectHorario.innerHTML = '<option value="">Carregando...</option>';
   selectHorario.disabled = true;
-
+  
   if (!dataSelecionada) {
     selectHorario.innerHTML = '<option value="">Selecione uma data</option>';
     selectHorario.disabled = false;
     return;
   }
 
-  const url = `${WEB_APP_URL}?data=${encodeURIComponent(dataSelecionada)}&callback=handleHorarios&_=${Date.now()}`;
+  try {
+    const callbackName = 'handleHorarios';
+    const url = `${WEB_APP_URL}?data=${encodeURIComponent(dataSelecionada)}&callback=${callbackName}&_=${Date.now()}`;
 
-  const old = document.getElementById('jsonp-script');
-  if (old) old.remove();
+    // Remove scripts antigos
+    document.querySelectorAll('script[data-jsonp]').forEach(s => s.remove());
 
-  const script = document.createElement('script');
-  script.id = 'jsonp-script';
-  script.src = url;
-  script.onerror = function() {
-    console.error("❌ Erro ao conectar ao Apps Script");
-    selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
+    const script = document.createElement('script');
+    script.src = url;
+    script.dataset.jsonp = 'true';
+
+    script.onerror = () => {
+      console.error("❌ Erro ao conectar ao Apps Script");
+      selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
+      selectHorario.disabled = false;
+    };
+
+    // Força timeout caso nada carregue em 5 segundos
+    const timeout = setTimeout(() => {
+      selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
+      selectHorario.disabled = false;
+    }, 5000);
+
+    window[callbackName] = (data) => {
+      clearTimeout(timeout);
+      if (data.status === 'ok' && Array.isArray(data.horarios)) {
+        selectHorario.innerHTML = '<option value="">Selecione...</option>';
+        data.horarios.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = h;
+          selectHorario.appendChild(opt);
+        });
+      } else {
+        selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
+      }
+      selectHorario.disabled = false;
+    };
+
+    document.head.appendChild(script);
+  } catch (err) {
+    console.error("❌ Exceção ao carregar horários:", err);
+    selectHorario.innerHTML = '<option value="">Erro inesperado</option>';
     selectHorario.disabled = false;
-  };
-
-  document.head.appendChild(script);
+  }
 }
-
-inputData.addEventListener('change', function() {
-  carregarHorariosParaData(this.value);
-});
-
 // Mostrar mensagem
 function mostrarMensagem(msg, tipo) {
   messageContainer.innerHTML = `<div class="message ${tipo}">${msg}</div>`;
@@ -443,4 +468,5 @@ console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
+
 
