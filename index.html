@@ -4,143 +4,103 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Agende sua Visita - Maternidade</title>
-  <link rel="icon" href="data:,">
   <style>
-    :root{
-      --container-width: 980px;
-      --gap: 18px;
+    :root {
       --accent: #d94f72;
       --btn: #007b8f;
       --bg: #fff7f9;
     }
 
-    html,body{
-      height:100%;
-      margin:0;
+    body {
       font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
       background: var(--bg);
-      color:#333;
+      margin: 0;
+      padding: 20px;
+      color: #333;
     }
 
-    .container{
-      max-width: var(--container-width);
-      margin:40px auto;
-      background:#fff;
-      padding:28px;
-      border-radius:10px;
-      box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    .container {
+      max-width: 960px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
     }
 
-    h1{
+    h1 {
       color: var(--accent);
-      margin:0 0 6px;
-      font-size:26px;
+      margin-bottom: 10px;
     }
 
-    p.lead{
-      margin:0 0 22px;
-      color:#666;
-      line-height:1.45;
+    p.lead {
+      color: #555;
+      margin-bottom: 25px;
     }
 
-    .form-grid{
-      display:grid;
+    .form-grid {
+      display: grid;
       grid-template-columns: repeat(12, 1fr);
-      gap: var(--gap);
-      align-items:start;
+      gap: 16px;
     }
 
-    .field{
-      display:flex;
-      flex-direction:column;
+    .field {
+      display: flex;
+      flex-direction: column;
     }
 
-    label{
-      font-weight:600;
-      margin-bottom:6px;
-      font-size:13px;
+    label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      font-size: 13px;
     }
 
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    input[type="number"],
-    input[type="date"],
-    select,
-    textarea{
-      border:1px solid #d0d0d0;
-      border-radius:8px;
-      padding:10px 12px;
-      font-size:14px;
-      outline:none;
-      transition:box-shadow .15s, border-color .15s;
+    input, select, textarea {
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      outline: none;
     }
 
-    input:focus, select:focus, textarea:focus{
-      box-shadow:0 0 0 3px rgba(0,123,140,0.07);
-      border-color:#9fbecd;
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(217, 79, 114, 0.1);
     }
 
-    textarea{ min-height:90px; resize:vertical; }
+    textarea { min-height: 80px; resize: vertical; }
 
-    .span-12{ grid-column: span 12; }
-    .span-8{ grid-column: span 8; }
-    .span-7{ grid-column: span 7; }
-    .span-6{ grid-column: span 6; }
-    .span-5{ grid-column: span 5; }
-    .span-4{ grid-column: span 4; }
-    .span-3{ grid-column: span 3; }
+    .span-12 { grid-column: span 12; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+    .span-3 { grid-column: span 3; }
 
-    .alerta{
-      font-weight:700;
-      margin-top:6px;
-    }
-    .alerta ul{ margin:8px 0 0 0; padding-left:16px; font-weight:600; color:#444; }
-    .alerta li{ margin:6px 0; }
-
-    .checkbox-row{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      font-size:14px;
-      line-height:1.2;
-    }
-    .checkbox-row input[type="checkbox"]{
-      width:18px; height:18px;
-      margin:0;
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
     }
 
-    .actions{ text-align:center; margin-top:6px; }
-    button{
+    button {
       background: var(--btn);
-      color:#fff;
-      border:none;
-      padding:12px 22px;
-      border-radius:8px;
-      font-size:15px;
-      cursor:pointer;
-      transition: all 0.3s ease;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
     }
-    button:hover{ filter:brightness(.93); }
-    button:disabled{
-      background: #cccccc;
+
+    button:hover { filter: brightness(0.95); }
+
+    button:disabled {
+      background: #ccc;
       cursor: not-allowed;
     }
 
-    .loading{
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid #ffffff;
-      border-radius: 50%;
-      border-top-color: transparent;
-      animation: spin 1s ease-in-out infinite;
-      margin-right: 10px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .message{
+    .message {
       padding: 12px;
       border-radius: 8px;
       margin: 10px 0;
@@ -148,97 +108,93 @@
       font-weight: 500;
     }
 
-    .message.success{
+    .message.success {
       background: #d4edda;
       color: #155724;
       border: 1px solid #c3e6cb;
     }
 
-    .message.error{
+    .message.error {
       background: #f8d7da;
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
 
-    @media (max-width:800px){
-      .form-grid{ grid-template-columns: 1fr; gap:14px; }
-      .field{ grid-column: 1 / -1; }
-      .actions{ text-align:left; }
+    .alerta {
+      font-weight: 700;
+      margin-top: 15px;
     }
 
-    .small-note{ color:#777; font-size:13px; margin-top:10px; }
+    .alerta ul {
+      margin: 8px 0 0 20px;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Agende sua Visita</h1>
-    <p class="lead">Teremos o maior prazer em receber você e um acompanhante para uma visita guiada à nossa maternidade.</p>
+    <p class="lead">Preencha os campos abaixo para agendar sua visita guiada à maternidade.</p>
 
     <form id="agendamentoForm" class="form-grid" novalidate>
       <div class="field span-7">
         <label for="nome">Nome Completo *</label>
-        <input id="nome" name="nome" type="text" required>
+        <input id="nome" type="text" required>
       </div>
-
       <div class="field span-5">
         <label for="email">E-mail *</label>
-        <input id="email" name="email" type="email" required>
+        <input id="email" type="email" required>
       </div>
-
       <div class="field span-3">
         <label for="telefone">Telefone *</label>
-        <input id="telefone" name="telefone" type="tel" placeholder="(00) 00000-0000" required maxlength="15">
+        <input id="telefone" type="tel" placeholder="(00) 00000-0000" required maxlength="15">
       </div>
-
       <div class="field span-3">
         <label for="gestacao">Semana de Gestação *</label>
-        <input id="gestacao" name="gestacao" type="number" min="1" max="42" required>
+        <input id="gestacao" type="number" min="1" max="42" required>
       </div>
-
       <div class="field span-6">
         <label for="obstetra">Obstetra *</label>
-        <input id="obstetra" name="obstetra" type="text" required>
+        <input id="obstetra" type="text" required>
       </div>
-
       <div class="field span-4">
         <label for="cidade">Cidade *</label>
-        <input id="cidade" name="cidade" type="text" required>
+        <input id="cidade" type="text" required>
       </div>
-
       <div class="field span-8">
         <label for="bairro">Bairro *</label>
-        <input id="bairro" name="bairro" type="text" required>
+        <input id="bairro" type="text" required>
       </div>
-
       <div class="field span-3">
         <label for="data">Data *</label>
-        <input id="data" name="data" type="date" required>
+        <input id="data" type="date" required>
       </div>
-
       <div class="field span-3">
         <label for="horario">Horário *</label>
-        <select id="horario" name="horario" required>
+        <select id="horario" required>
           <option value="">Selecione...</option>
         </select>
       </div>
-
       <div class="field span-3">
         <label for="plano">Possui plano de saúde? *</label>
-        <select id="plano" name="plano" required>
+        <select id="plano" required>
           <option value="">Selecione...</option>
           <option value="Sim">Sim</option>
           <option value="Não">Não</option>
         </select>
       </div>
-
       <div class="field span-3" id="field-qualplano" style="display:none;">
         <label for="qualplano">Se sim, qual?</label>
-        <input id="qualplano" name="qualplano" type="text">
+        <input id="qualplano" type="text">
       </div>
-
       <div class="field span-6">
         <label for="conheceu">Como conheceu a maternidade? *</label>
-        <select id="conheceu" name="conheceu" required>
+        <select id="conheceu" required>
           <option value="">Selecione...</option>
           <option>Indicação de amigo(a)</option>
           <option>Redes sociais</option>
@@ -246,126 +202,53 @@
           <option>Outros</option>
         </select>
       </div>
-
       <div class="field span-6">
         <label for="obs">Observações</label>
-        <textarea id="obs" name="obs"></textarea>
+        <textarea id="obs" placeholder="Escreva aqui..."></textarea>
       </div>
+
+      <div class="span-12 alerta">
+        Atenção:
+        <ul>
+          <li>Você poderá levar apenas um acompanhante.</li>
+          <li>Tolerância para atraso de no máximo 15 minutos.</li>
+        </ul>
+      </div>
+
+      <div class="span-12 checkbox-row">
+        <input id="termos" type="checkbox" required>
+        <label for="termos">Li e aceito os termos de uso dos dados conforme indicado na Política de Privacidade.</label>
+      </div>
+
+      <div class="span-12" id="messageContainer"></div>
 
       <div class="span-12">
-        <div class="alerta">
-          Atenção:
-          <ul>
-            <li>Você poderá levar apenas um acompanhante.</li>
-            <li>Tolerância para atraso de no máximo 15 minutos.</li>
-            <li>Horários disponíveis conforme o dia da semana.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="span-12">
-        <label class="checkbox-row">
-          <input id="termos" name="termos" type="checkbox" required>
-          Li e aceito os termos de uso dos dados conforme indicado na Política de Privacidade.
-        </label>
-      </div>
-
-      <div class="span-12">
-        <div id="messageContainer"></div>
-      </div>
-
-      <div class="span-12 actions">
         <button type="submit" id="submitBtn">
           <span class="btn-text">Agendar Visita</span>
         </button>
-        <div class="small-note">* Campos obrigatórios</div>
       </div>
     </form>
   </div>
 
   <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbymcGV_VzLEae1NS6_sJ6w8lsPmc1VJyjHfXSVXpE-lspXy63gc3Khtkujuowtv-qDW/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbymcGV_VzLEae1NS6_sJ6w8lsPmc1VJyjHfXSVXpE-lspXy63gc3Khtkujuowtv-qDW/exec";
 
-const selectHorario = document.getElementById('horario');
-const inputData = document.getElementById('data');
-const submitBtn = document.getElementById('submitBtn');
-const btnText = submitBtn.querySelector('.btn-text');
-const messageContainer = document.getElementById('messageContainer');
+  const selectHorario = document.getElementById('horario');
+  const inputData = document.getElementById('data');
+  const messageContainer = document.getElementById('messageContainer');
+  const submitBtn = document.getElementById('submitBtn');
+  const btnText = submitBtn.querySelector('.btn-text');
 
-// ✅ JSONP retorno de horários
-window.handleHorarios = function(data) {
-  console.log("📥 Retorno JSONP:", data);
-  selectHorario.innerHTML = '<option value="">Selecione...</option>';
-  
-  if (data.status === 'ok' && Array.isArray(data.horarios)) {
-    if (data.horarios.length > 0) {
-      data.horarios.forEach(h => {
-        const opt = document.createElement('option');
-        opt.value = h;
-        opt.textContent = h;
-        selectHorario.appendChild(opt);
-      });
-    } else {
-      selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
-    }
-  } else {
-    selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
-  }
+  // ============================
+  // CALLBACK JSONP: horários
+  // ============================
+  window.handleHorarios = function(data) {
+    console.log("🟢 handleHorarios recebeu:", data);
 
-  selectHorario.disabled = false;
-};
-
-// ✅ JSONP retorno do agendamento
-window.handleAgendamento = function(data) {
-  setLoading(false);
-  if (data.status === 'ok') {
-    mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato.', 'success');
-    document.getElementById('agendamentoForm').reset();
     selectHorario.innerHTML = '<option value="">Selecione...</option>';
-    document.getElementById('field-qualplano').style.display = 'none';
-  } else {
-    mostrarMensagem('❌ ' + (data.message || 'Erro ao realizar agendamento'), 'error');
-  }
-};
 
-// ✅ Carregar horários
-function carregarHorariosParaData(dataSelecionada) {
-  selectHorario.innerHTML = '<option value="">Carregando...</option>';
-  selectHorario.disabled = true;
-  
-  if (!dataSelecionada) {
-    selectHorario.innerHTML = '<option value="">Selecione uma data</option>';
-    selectHorario.disabled = false;
-    return;
-  }
-
-  try {
-    const callbackName = 'handleHorarios';
-    const url = `${WEB_APP_URL}?data=${encodeURIComponent(dataSelecionada)}&callback=${callbackName}&_=${Date.now()}`;
-
-    // Remove scripts antigos
-    document.querySelectorAll('script[data-jsonp]').forEach(s => s.remove());
-
-    const script = document.createElement('script');
-    script.src = url;
-    script.dataset.jsonp = 'true';
-
-    script.onerror = () => {
-      console.error("❌ Erro ao conectar ao Apps Script");
-      selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
-      selectHorario.disabled = false;
-    };
-
-    // Força timeout caso nada carregue em 5 segundos
-    const timeout = setTimeout(() => {
-      selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
-      selectHorario.disabled = false;
-    }, 5000);
-
-    window[callbackName] = (data) => {
-      clearTimeout(timeout);
-      if (data.status === 'ok' && Array.isArray(data.horarios)) {
-        selectHorario.innerHTML = '<option value="">Selecione...</option>';
+    if (data && data.status === 'ok' && Array.isArray(data.horarios)) {
+      if (data.horarios.length > 0) {
         data.horarios.forEach(h => {
           const opt = document.createElement('option');
           opt.value = h;
@@ -375,98 +258,130 @@ function carregarHorariosParaData(dataSelecionada) {
       } else {
         selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
       }
+    } else {
+      selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
+    }
+
+    selectHorario.disabled = false;
+  };
+
+  // ============================
+  // CALLBACK JSONP: agendamento
+  // ============================
+  window.handleAgendamento = function(data) {
+    console.log("📦 handleAgendamento:", data);
+    if (data.status === 'ok') {
+      mostrarMensagem('✅ Agendamento realizado com sucesso!', 'success');
+      document.getElementById('agendamentoForm').reset();
+      selectHorario.innerHTML = '<option value="">Selecione...</option>';
+    } else {
+      mostrarMensagem('❌ ' + (data.message || 'Erro ao enviar.'), 'error');
+    }
+    setLoading(false);
+  };
+
+  // ============================
+  // Carregar horários por data
+  // ============================
+  function carregarHorariosParaData(dataSelecionada) {
+    if (!dataSelecionada) return;
+    selectHorario.innerHTML = '<option>Carregando...</option>';
+    selectHorario.disabled = true;
+
+    const url = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&callback=handleHorarios&_=${Date.now()}`;
+    console.log("🔗 Requisitando horários:", url);
+
+    const scriptAntigo = document.getElementById('jsonp-script');
+    if (scriptAntigo) scriptAntigo.remove();
+
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = url;
+    script.onerror = function() {
+      console.error("❌ Erro ao conectar ao Apps Script");
+      selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
       selectHorario.disabled = false;
     };
 
     document.head.appendChild(script);
-  } catch (err) {
-    console.error("❌ Exceção ao carregar horários:", err);
-    selectHorario.innerHTML = '<option value="">Erro inesperado</option>';
-    selectHorario.disabled = false;
-  }
-}
-// Mostrar mensagem
-function mostrarMensagem(msg, tipo) {
-  messageContainer.innerHTML = `<div class="message ${tipo}">${msg}</div>`;
-  if (tipo === 'success') setTimeout(() => messageContainer.innerHTML = '', 5000);
-}
-
-function setLoading(loading) {
-  if (loading) {
-    submitBtn.disabled = true;
-    btnText.innerHTML = '<div class="loading"></div>Enviando...';
-  } else {
-    submitBtn.disabled = false;
-    btnText.textContent = 'Agendar Visita';
-  }
-}
-
-// Mostrar/ocultar campo "qual plano"
-document.getElementById('plano').addEventListener('change', e => {
-  const field = document.getElementById('field-qualplano');
-  const input = document.getElementById('qualplano');
-  if (e.target.value === 'Sim') {
-    field.style.display = 'flex';
-    input.required = true;
-  } else {
-    field.style.display = 'none';
-    input.required = false;
-    input.value = '';
-  }
-});
-
-// Envio do formulário
-document.getElementById('agendamentoForm').addEventListener('submit', e => {
-  e.preventDefault();
-
-  if (!document.getElementById('termos').checked) {
-    mostrarMensagem('Você precisa aceitar os termos antes de enviar.', 'error');
-    return;
   }
 
-  const dados = {
-    nome: nome.value.trim(),
-    email: email.value.trim(),
-    telefone: telefone.value.trim(),
-    semanaGestacao: gestacao.value.trim(),
-    obstetra: obstetra.value.trim(),
-    cidade: cidade.value.trim(),
-    bairro: bairro.value.trim(),
-    data: data.value,
-    horario: horario.value,
-    planoSaude: plano.value,
-    qualPlano: qualplano.value.trim(),
-    comoConheceu: conheceu.value,
-    observacoes: obs.value.trim()
-  };
+  inputData.addEventListener('change', () => carregarHorariosParaData(inputData.value));
 
-  if (!dados.nome || !dados.email || !dados.telefone || !dados.data || !dados.horario) {
-    mostrarMensagem('Preencha todos os campos obrigatórios.', 'error');
-    return;
+  // ============================
+  // Enviar agendamento
+  // ============================
+  document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!document.getElementById('termos').checked) {
+      mostrarMensagem('Você precisa aceitar os termos antes de enviar.', 'error');
+      return;
+    }
+
+    const dados = {
+      nome: nome.value.trim(),
+      email: email.value.trim(),
+      telefone: telefone.value.trim(),
+      semanaGestacao: gestacao.value.trim(),
+      obstetra: obstetra.value.trim(),
+      cidade: cidade.value.trim(),
+      bairro: bairro.value.trim(),
+      data: data.value,
+      horario: horario.value,
+      planoSaude: plano.value,
+      qualPlano: qualplano.value.trim(),
+      comoConheceu: conheceu.value,
+      observacoes: obs.value.trim()
+    };
+
+    const camposObrigatorios = ['nome','email','telefone','data','horario'];
+    if (camposObrigatorios.some(c => !dados[c])) {
+      mostrarMensagem('Preencha todos os campos obrigatórios.', 'error');
+      return;
+    }
+
+    setLoading(true);
+
+    let urlParams = Object.entries(dados)
+      .map(([k,v]) => `${k}=${encodeURIComponent(v)}`)
+      .join('&');
+    urlParams += '&callback=handleAgendamento';
+
+    const url = `${WEB_APP_URL}?${urlParams}`;
+    console.log("🚀 Enviando agendamento:", url);
+
+    const oldScript = document.getElementById('agendamento-script');
+    if (oldScript) oldScript.remove();
+
+    const script = document.createElement('script');
+    script.id = 'agendamento-script';
+    script.src = url;
+    script.onerror = function() {
+      mostrarMensagem('❌ Erro de conexão. Tente novamente.', 'error');
+      setLoading(false);
+    };
+    document.head.appendChild(script);
+  });
+
+  // ============================
+  // Utilitários
+  // ============================
+  function mostrarMensagem(msg, tipo) {
+    messageContainer.innerHTML = `<div class="message ${tipo}">${msg}</div>`;
+    if (tipo === 'success') setTimeout(() => messageContainer.innerHTML = '', 4000);
   }
 
-  setLoading(true);
-  mostrarMensagem('', '');
+  function setLoading(loading) {
+    if (loading) {
+      submitBtn.disabled = true;
+      btnText.textContent = 'Enviando...';
+    } else {
+      submitBtn.disabled = false;
+      btnText.textContent = 'Agendar Visita';
+    }
+  }
 
-  const urlParams = new URLSearchParams(dados);
-  urlParams.append('callback', 'handleAgendamento');
-
-  const scriptAntigo = document.getElementById('agendamento-script');
-  if (scriptAntigo) scriptAntigo.remove();
-
-  const script = document.createElement('script');
-  script.id = 'agendamento-script';
-  script.src = `${WEB_APP_URL}?${urlParams.toString()}`;
-  script.onerror = () => {
-    mostrarMensagem('❌ Erro de conexão. Tente novamente.', 'error');
-    setLoading(false);
-  };
-  document.head.appendChild(script);
-});
-
-console.log("✅ Sistema de agendamento carregado!");
+  console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
-
-
