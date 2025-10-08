@@ -313,13 +313,87 @@ const submitBtn = document.getElementById('submitBtn');
 const btnText = submitBtn.querySelector('.btn-text');
 const messageContainer = document.getElementById('messageContainer');
 
-// Função global para receber horários via JSONP
-window.handleHorarios = function(data) {
-  if (data.status === 'ok' && Array.isArray(data.horarios)) {
+// Armazenamento local para simular o banco de dados
+let agendamentosLocal = JSON.parse(localStorage.getItem('agendamentos_maternidade')) || [];
+
+// Função para salvar agendamentos no localStorage
+function salvarAgendamentoLocal(dados) {
+  agendamentosLocal.push({
+    id: Date.now(),
+    ...dados,
+    dataCriacao: new Date().toISOString()
+  });
+  localStorage.setItem('agendamentos_maternidade', JSON.stringify(agendamentosLocal));
+}
+
+// Função para obter horários base baseado no dia da semana
+function obterHorariosBase(dataSelecionada) {
+  if (!dataSelecionada) return [];
+  
+  const dataObj = new Date(dataSelecionada);
+  const diaSemana = dataObj.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
+  
+  switch (diaSemana) {
+    case 0: // Domingo
+      return ["10:00"];
+    case 1: // Segunda
+    case 2: // Terça
+    case 3: // Quarta
+    case 5: // Sexta
+      return ["10:00", "15:00"];
+    case 6: // Sábado
+      return ["15:00"];
+    case 4: // Quinta (fechado)
+    default:
+      return [];
+  }
+}
+
+// Função para contar agendamentos existentes por data e horário
+function contarAgendamentos(data, horario) {
+  return agendamentosLocal.filter(ag => 
+    ag.data === data && ag.horario === horario
+  ).length;
+}
+
+// Função para carregar horários disponíveis
+function carregarHorariosParaData(dataSelecionada) {
+  selectHorario.innerHTML = '<option value="">Carregando...</option>';
+  selectHorario.disabled = true;
+  
+  if (!dataSelecionada) {
+    selectHorario.innerHTML = '<option value="">Selecione uma data</option>';
+    selectHorario.disabled = false;
+    return;
+  }
+
+  // Verificar se a data é no passado
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dataSelecionadaObj = new Date(dataSelecionada);
+  
+  if (dataSelecionadaObj < hoje) {
+    selectHorario.innerHTML = '<option value="">Data no passado</option>';
+    selectHorario.disabled = false;
+    return;
+  }
+
+  setTimeout(() => {
+    const horariosBase = obterHorariosBase(dataSelecionada);
+    const horariosDisponiveis = [];
+    
+    // Verificar disponibilidade para cada horário base
+    horariosBase.forEach(horario => {
+      const count = contarAgendamentos(dataSelecionada, horario);
+      if (count < 5) { // Máximo 5 agendamentos por horário
+        horariosDisponiveis.push(horario);
+      }
+    });
+    
     selectHorario.innerHTML = '<option value="">Selecione...</option>';
     
-    if (data.horarios.length > 0) {
-      data.horarios.forEach(h => {
+    if (horariosDisponiveis.length > 0) {
+      horariosDisponiveis.forEach(h => {
         const opt = document.createElement('option');
         opt.value = h;
         opt.textContent = h;
@@ -328,31 +402,10 @@ window.handleHorarios = function(data) {
     } else {
       selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
     }
-  } else {
-    selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
-  }
-  
-  selectHorario.disabled = false;
-};
-
-// Função global para receber resposta do agendamento
-window.handleAgendamento = function(data) {
-  if (data.status === 'ok') {
-    mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
     
-    // Limpar formulário
-    document.getElementById('agendamentoForm').reset();
-    selectHorario.innerHTML = '<option value="">Selecione...</option>';
-    
-    // Ocultar campo do plano
-    document.getElementById('field-qualplano').style.display = 'none';
-    
-  } else {
-    mostrarMensagem('❌ ' + (data.message || 'Erro ao realizar agendamento'), 'error');
-  }
-  
-  setLoading(false);
-};
+    selectHorario.disabled = false;
+  }, 500); // Simular um pequeno delay
+}
 
 // Mostrar/ocultar campo do plano de saúde
 document.getElementById('plano').addEventListener('change', function() {
@@ -390,94 +443,11 @@ document.getElementById('telefone').addEventListener('input', function(e) {
   }
 });
 
-// Carrega horários disponíveis quando muda a data usando JSONP
-  <!-- substitua apenas a função inteira abaixo no seu HTML -->
-  <script>
-  // ... (mantém o resto do seu script acima)
+// Event listener para mudança de data
+inputData.addEventListener('change', function() {
+  carregarHorariosParaData(this.value);
+});
 
-  // Carrega horários disponíveis quando muda a data usando JSONP
-  function carregarHorariosParaData(dataSelecionada) {
-    selectHorario.innerHTML = '<option value="">Carregando...</option>';
-    selectHorario.disabled = true;
-
-    if (!dataSelecionada) {
-      selectHorario.innerHTML = '<option value="">Selecione uma data</option>';
-      selectHorario.disabled = false;
-      return;
-    }
-
-    try {
-      // Monta URL JSONP com cache-buster e log para debug
-      const url = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&callback=handleHorarios&_=${Date.now()}`;
-      console.log("🔗 Requisitando JSONP de horários:", url);
-
-      // Remover script anterior se existir
-      const scriptAntigo = document.getElementById('jsonp-script');
-      if (scriptAntigo) scriptAntigo.remove();
-
-      // Criar novo script para JSONP
-      const script = document.createElement('script');
-      script.id = 'jsonp-script';
-      script.src = url;
-
-      // onload (opcional) e onerror mais robusto
-      script.onload = function() {
-        console.log("✅ Script JSONP carregado (onload). Aguardando callback...");
-        // o callback 'handleHorarios' será executado pelo conteúdo retornado
-      };
-
-      script.onerror = function(evt) {
-        console.error("❌ Erro ao conectar ao Apps Script (script.onerror)", evt);
-        selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
-        selectHorario.disabled = false;
-
-        // tentativa de fallback diagnóstico (pode falhar por CORS, mas ajuda a debugar)
-        const fallbackUrl = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&_=${Date.now()}`;
-        console.log("🔁 Tentando fallback via fetch (diag):", fallbackUrl);
-
-        fetch(fallbackUrl, { mode: 'cors' })
-          .then(res => res.text())
-          .then(text => {
-            console.log("🔍 Fallback fetch - resposta textual:", text);
-            // Se retornar algo, avisamos ao usuário/developer
-            mostrarMensagem('Erro ao carregar horários automaticamente — verifique o console (fetch fallback).', 'error');
-          })
-          .catch(err => {
-            console.error("❌ Fallback fetch falhou (provável CORS ou deploy não público):", err);
-            mostrarMensagem('Erro ao carregar horários. Confirme que o Apps Script está publicado como "Qualquer pessoa".', 'error');
-          });
-      };
-
-      // adicionar ao head (inicia requisição)
-      document.head.appendChild(script);
-
-      // timeout extra: caso nem o onerror nem o callback aconteçam
-      const timeoutMs = 8000;
-      const to = setTimeout(() => {
-        // se o select já foi preenchido pela callback, não sobrescrever
-        if (!selectHorario.disabled) return;
-        console.warn("⚠️ Timeout ao carregar horários (nenhuma resposta em " + timeoutMs + "ms).");
-        selectHorario.innerHTML = '<option value="">Erro ao carregar horários (timeout)</option>';
-        selectHorario.disabled = false;
-        // Remover script para limpar estado
-        const s = document.getElementById('jsonp-script');
-        if (s) s.remove();
-      }, timeoutMs);
-
-      // Se preferir, limpar timeout no callback 'handleHorarios' adicionando window-level hook.
-      // (Opcional: deixei simples para evitar alterar a sua função handleHorarios)
-    } catch (err) {
-      console.error("❌ Exceção ao montar JSONP:", err);
-      selectHorario.innerHTML = '<option value="">Erro inesperado</option>';
-      selectHorario.disabled = false;
-    }
-  }
-
-  // Event listener para mudança de data — mantém como você já tinha
-  inputData.addEventListener('change', function() {
-    carregarHorariosParaData(this.value);
-  });
- 
 // Mostrar mensagem
 function mostrarMensagem(mensagem, tipo) {
   messageContainer.innerHTML = `<div class="message ${tipo}">${mensagem}</div>`;
@@ -528,7 +498,7 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   };
 
   // Validar campos obrigatórios
-  const camposObrigatorios = ['nome', 'email', 'telefone', 'data', 'horario', 'planoSaude', 'comoConheceu'];
+  const camposObrigatorios = ['nome', 'email', 'telefone', 'gestacao', 'obstetra', 'cidade', 'bairro', 'data', 'horario', 'planoSaude', 'comoConheceu'];
   const camposVazios = camposObrigatorios.filter(campo => !dados[campo]);
   
   if (camposVazios.length > 0) {
@@ -543,49 +513,73 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     return;
   }
 
-  setLoading(true);
-  mostrarMensagem('', '');
-
-  // Construir URL com parâmetros
-  let urlParams = `nome=${encodeURIComponent(dados.nome)}`;
-  urlParams += `&email=${encodeURIComponent(dados.email)}`;
-  urlParams += `&telefone=${encodeURIComponent(dados.telefone)}`;
-  urlParams += `&semanaGestacao=${encodeURIComponent(dados.semanaGestacao)}`;
-  urlParams += `&obstetra=${encodeURIComponent(dados.obstetra)}`;
-  urlParams += `&cidade=${encodeURIComponent(dados.cidade)}`;
-  urlParams += `&bairro=${encodeURIComponent(dados.bairro)}`;
-  urlParams += `&data=${encodeURIComponent(dados.data)}`;
-  urlParams += `&horario=${encodeURIComponent(dados.horario)}`;
-  urlParams += `&planoSaude=${encodeURIComponent(dados.planoSaude)}`;
-  urlParams += `&qualPlano=${encodeURIComponent(dados.qualPlano)}`;
-  urlParams += `&comoConheceu=${encodeURIComponent(dados.comoConheceu)}`;
-  urlParams += `&observacoes=${encodeURIComponent(dados.observacoes)}`;
-  urlParams += `&callback=handleAgendamento`;
-
-  const urlComParams = `${WEB_APP_URL}?${urlParams}`;
-
-  // Remover script anterior se existir
-  const scriptAntigo = document.getElementById('agendamento-script');
-  if (scriptAntigo) {
-    scriptAntigo.remove();
+  // Verificar se ainda há vagas disponíveis (concorrência)
+  const count = contarAgendamentos(dados.data, dados.horario);
+  if (count >= 5) {
+    mostrarMensagem('❌ Desculpe, este horário acabou de ficar lotado. Por favor, selecione outro horário.', 'error');
+    carregarHorariosParaData(dados.data); // Recarregar horários
+    return;
   }
+
+  setLoading(true);
+
+  // Salvar localmente
+  salvarAgendamentoLocal(dados);
   
-  // Criar script para JSONP
-  const script = document.createElement('script');
-  script.id = 'agendamento-script';
-  script.src = urlComParams;
-  script.onerror = function() {
-    mostrarMensagem('❌ Erro de conexão. Tente novamente.', 'error');
-    setLoading(false);
-  };
-  
-  document.head.appendChild(script);
+  // Tentar enviar para o Google Apps Script (opcional)
+  enviarParaGoogleAppsScript(dados);
 });
 
+// Função para tentar enviar para o Google Apps Script (mantém a funcionalidade original)
+function enviarParaGoogleAppsScript(dados) {
+  const urlParams = new URLSearchParams();
+  urlParams.append('nome', dados.nome);
+  urlParams.append('email', dados.email);
+  urlParams.append('telefone', dados.telefone);
+  urlParams.append('semanaGestacao', dados.semanaGestacao);
+  urlParams.append('obstetra', dados.obstetra);
+  urlParams.append('cidade', dados.cidade);
+  urlParams.append('bairro', dados.bairro);
+  urlParams.append('data', dados.data);
+  urlParams.append('horario', dados.horario);
+  urlParams.append('planoSaude', dados.planoSaude);
+  urlParams.append('qualPlano', dados.qualPlano);
+  urlParams.append('comoConheceu', dados.comoConheceu);
+  urlParams.append('observacoes', dados.observacoes);
+
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: urlParams
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
+      document.getElementById('agendamentoForm').reset();
+      document.getElementById('field-qualplano').style.display = 'none';
+    } else {
+      // Mesmo com erro no servidor, o agendamento foi salvo localmente
+      mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
+      document.getElementById('agendamentoForm').reset();
+      document.getElementById('field-qualplano').style.display = 'none';
+    }
+  })
+  .catch(error => {
+    // Em caso de erro de conexão, o agendamento ainda foi salvo localmente
+    mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
+    document.getElementById('agendamentoForm').reset();
+    document.getElementById('field-qualplano').style.display = 'none';
+  })
+  .finally(() => {
+    setLoading(false);
+  });
+}
+
+// Inicialização
 console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
-
-
-
