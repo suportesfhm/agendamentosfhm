@@ -475,7 +475,7 @@ function setLoading(loading) {
   }
 }
 
-// Envio do formulário - CORREÇÃO APLICADA AQUI
+// Envio do formulário
 document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -502,9 +502,9 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     observacoes: document.getElementById('obs').value.trim()
   };
 
-  console.log("Dados coletados:", dados); // Para debug
+  console.log("Dados coletados:", dados);
 
-  // Validar campos obrigatórios - CORREÇÃO APLICADA
+  // Validar campos obrigatórios
   const camposObrigatorios = [
     { campo: 'nome', valor: dados.nome, elemento: document.getElementById('nome') },
     { campo: 'email', valor: dados.email, elemento: document.getElementById('email') },
@@ -522,7 +522,7 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   const camposVazios = camposObrigatorios.filter(item => !item.valor);
   
   if (camposVazios.length > 0) {
-    console.log("Campos vazios:", camposVazios); // Para debug
+    console.log("Campos vazios:", camposVazios);
     mostrarMensagem('Preencha todos os campos obrigatórios marcados com *', 'error');
     
     // Destacar campos vazios
@@ -560,9 +560,9 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   enviarParaGoogleAppsScript(dados);
 });
 
-// Função para tentar enviar para o Google Apps Script - CORREÇÃO APLICADA
+// Função para tentar enviar para o Google Apps Script
 function enviarParaGoogleAppsScript(dados) {
-  // Primeiro mapear os nomes dos campos para corresponder ao que o Google Apps Script espera
+  // Construir URL com parâmetros GET (mais compatível com Google Apps Script)
   const params = new URLSearchParams();
   params.append('nome', dados.nome);
   params.append('email', dados.email);
@@ -574,19 +574,15 @@ function enviarParaGoogleAppsScript(dados) {
   params.append('data', dados.data);
   params.append('horario', dados.horario);
   params.append('planoSaude', dados.planoSaude);
-  params.append('qualPlano', dados.qualPlano || ''); // Pode ser vazio
+  params.append('qualPlano', dados.qualPlano || '');
   params.append('comoConheceu', dados.comoConheceu);
-  params.append('observacoes', dados.observacoes || ''); // Pode ser vazio
+  params.append('observacoes', dados.observacoes || '');
 
-  console.log("Enviando para Google Apps Script:", params.toString()); // Para debug
+  const urlComParams = `${WEB_APP_URL}?${params.toString()}`;
 
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: params
-  })
+  console.log("Enviando para Google Apps Script via GET:", urlComParams);
+
+  fetch(urlComParams)
   .then(response => {
     console.log("Resposta do servidor:", response);
     return response.json();
