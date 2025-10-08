@@ -330,14 +330,15 @@ function salvarAgendamentoLocal(dados) {
 function obterHorariosBase(dataSelecionada) {
   if (!dataSelecionada) return [];
   
-  const dataObj = new Date(dataSelecionada);
+  const dataObj = new Date(dataSelecionada + 'T00:00:00'); // Corrige o fuso horário
   const diaSemana = dataObj.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
+  console.log("Data:", dataSelecionada, "Dia da semana:", diaSemana);
   
   switch (diaSemana) {
     case 0: // Domingo
       return ["10:00"];
     case 1: // Segunda
-    case 2: // Terça
+    case 2: // Terça  
     case 3: // Quarta
     case 5: // Sexta
       return ["10:00", "15:00"];
@@ -347,6 +348,61 @@ function obterHorariosBase(dataSelecionada) {
     default:
       return [];
   }
+}
+
+// Função para carregar horários disponíveis
+function carregarHorariosParaData(dataSelecionada) {
+  selectHorario.innerHTML = '<option value="">Carregando...</option>';
+  selectHorario.disabled = true;
+  
+  if (!dataSelecionada) {
+    selectHorario.innerHTML = '<option value="">Selecione uma data</option>';
+    selectHorario.disabled = false;
+    return;
+  }
+
+  // Verificar se a data é no passado
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dataSelecionadaObj = new Date(dataSelecionada + 'T00:00:00');
+  
+  if (dataSelecionadaObj < hoje) {
+    selectHorario.innerHTML = '<option value="">Data no passado</option>';
+    selectHorario.disabled = false;
+    return;
+  }
+
+  setTimeout(() => {
+    const horariosBase = obterHorariosBase(dataSelecionada);
+    const horariosDisponiveis = [];
+    
+    console.log("Horários base para", dataSelecionada, ":", horariosBase);
+    
+    // Verificar disponibilidade para cada horário base
+    horariosBase.forEach(horario => {
+      const count = contarAgendamentos(dataSelecionada, horario);
+      if (count < 5) { // Máximo 5 agendamentos por horário
+        horariosDisponiveis.push(horario);
+      }
+    });
+    
+    selectHorario.innerHTML = '<option value="">Selecione...</option>';
+    
+    if (horariosDisponiveis.length > 0) {
+      horariosDisponiveis.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h;
+        selectHorario.appendChild(opt);
+      });
+    } else if (horariosBase.length === 0) {
+      selectHorario.innerHTML = '<option value="">Não há atendimento neste dia</option>';
+    } else {
+      selectHorario.innerHTML = '<option value="">Horários lotados</option>';
+    }
+    
+    selectHorario.disabled = false;
+  }, 500);
 }
 
 // Função para contar agendamentos existentes por data e horário
@@ -583,3 +639,4 @@ console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
+
