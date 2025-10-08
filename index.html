@@ -350,6 +350,13 @@ function obterHorariosBase(dataSelecionada) {
   }
 }
 
+// Função para contar agendamentos existentes por data e horário
+function contarAgendamentos(data, horario) {
+  return agendamentosLocal.filter(ag => 
+    ag.data === data && ag.horario === horario
+  ).length;
+}
+
 // Função para carregar horários disponíveis
 function carregarHorariosParaData(dataSelecionada) {
   selectHorario.innerHTML = '<option value="">Carregando...</option>';
@@ -403,64 +410,6 @@ function carregarHorariosParaData(dataSelecionada) {
     
     selectHorario.disabled = false;
   }, 500);
-}
-
-// Função para contar agendamentos existentes por data e horário
-function contarAgendamentos(data, horario) {
-  return agendamentosLocal.filter(ag => 
-    ag.data === data && ag.horario === horario
-  ).length;
-}
-
-// Função para carregar horários disponíveis
-function carregarHorariosParaData(dataSelecionada) {
-  selectHorario.innerHTML = '<option value="">Carregando...</option>';
-  selectHorario.disabled = true;
-  
-  if (!dataSelecionada) {
-    selectHorario.innerHTML = '<option value="">Selecione uma data</option>';
-    selectHorario.disabled = false;
-    return;
-  }
-
-  // Verificar se a data é no passado
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const dataSelecionadaObj = new Date(dataSelecionada);
-  
-  if (dataSelecionadaObj < hoje) {
-    selectHorario.innerHTML = '<option value="">Data no passado</option>';
-    selectHorario.disabled = false;
-    return;
-  }
-
-  setTimeout(() => {
-    const horariosBase = obterHorariosBase(dataSelecionada);
-    const horariosDisponiveis = [];
-    
-    // Verificar disponibilidade para cada horário base
-    horariosBase.forEach(horario => {
-      const count = contarAgendamentos(dataSelecionada, horario);
-      if (count < 5) { // Máximo 5 agendamentos por horário
-        horariosDisponiveis.push(horario);
-      }
-    });
-    
-    selectHorario.innerHTML = '<option value="">Selecione...</option>';
-    
-    if (horariosDisponiveis.length > 0) {
-      horariosDisponiveis.forEach(h => {
-        const opt = document.createElement('option');
-        opt.value = h;
-        opt.textContent = h;
-        selectHorario.appendChild(opt);
-      });
-    } else {
-      selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
-    }
-    
-    selectHorario.disabled = false;
-  }, 500); // Simular um pequeno delay
 }
 
 // Mostrar/ocultar campo do plano de saúde
@@ -526,7 +475,7 @@ function setLoading(loading) {
   }
 }
 
-// Envio do formulário
+// Envio do formulário - CORREÇÃO APLICADA AQUI
 document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -553,12 +502,36 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     observacoes: document.getElementById('obs').value.trim()
   };
 
-  // Validar campos obrigatórios
-  const camposObrigatorios = ['nome', 'email', 'telefone', 'gestacao', 'obstetra', 'cidade', 'bairro', 'data', 'horario', 'planoSaude', 'comoConheceu'];
-  const camposVazios = camposObrigatorios.filter(campo => !dados[campo]);
+  console.log("Dados coletados:", dados); // Para debug
+
+  // Validar campos obrigatórios - CORREÇÃO APLICADA
+  const camposObrigatorios = [
+    { campo: 'nome', valor: dados.nome, elemento: document.getElementById('nome') },
+    { campo: 'email', valor: dados.email, elemento: document.getElementById('email') },
+    { campo: 'telefone', valor: dados.telefone, elemento: document.getElementById('telefone') },
+    { campo: 'semanaGestacao', valor: dados.semanaGestacao, elemento: document.getElementById('gestacao') },
+    { campo: 'obstetra', valor: dados.obstetra, elemento: document.getElementById('obstetra') },
+    { campo: 'cidade', valor: dados.cidade, elemento: document.getElementById('cidade') },
+    { campo: 'bairro', valor: dados.bairro, elemento: document.getElementById('bairro') },
+    { campo: 'data', valor: dados.data, elemento: document.getElementById('data') },
+    { campo: 'horario', valor: dados.horario, elemento: document.getElementById('horario') },
+    { campo: 'planoSaude', valor: dados.planoSaude, elemento: document.getElementById('plano') },
+    { campo: 'comoConheceu', valor: dados.comoConheceu, elemento: document.getElementById('conheceu') }
+  ];
+
+  const camposVazios = camposObrigatorios.filter(item => !item.valor);
   
   if (camposVazios.length > 0) {
+    console.log("Campos vazios:", camposVazios); // Para debug
     mostrarMensagem('Preencha todos os campos obrigatórios marcados com *', 'error');
+    
+    // Destacar campos vazios
+    camposVazios.forEach(item => {
+      if (item.elemento) {
+        item.elemento.style.borderColor = 'red';
+        item.elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
     return;
   }
 
@@ -566,6 +539,7 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(dados.email)) {
     mostrarMensagem('Por favor, insira um email válido', 'error');
+    document.getElementById('email').style.borderColor = 'red';
     return;
   }
 
@@ -586,57 +560,85 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   enviarParaGoogleAppsScript(dados);
 });
 
-// Função para tentar enviar para o Google Apps Script (mantém a funcionalidade original)
+// Função para tentar enviar para o Google Apps Script - CORREÇÃO APLICADA
 function enviarParaGoogleAppsScript(dados) {
-  const urlParams = new URLSearchParams();
-  urlParams.append('nome', dados.nome);
-  urlParams.append('email', dados.email);
-  urlParams.append('telefone', dados.telefone);
-  urlParams.append('semanaGestacao', dados.semanaGestacao);
-  urlParams.append('obstetra', dados.obstetra);
-  urlParams.append('cidade', dados.cidade);
-  urlParams.append('bairro', dados.bairro);
-  urlParams.append('data', dados.data);
-  urlParams.append('horario', dados.horario);
-  urlParams.append('planoSaude', dados.planoSaude);
-  urlParams.append('qualPlano', dados.qualPlano);
-  urlParams.append('comoConheceu', dados.comoConheceu);
-  urlParams.append('observacoes', dados.observacoes);
+  // Primeiro mapear os nomes dos campos para corresponder ao que o Google Apps Script espera
+  const params = new URLSearchParams();
+  params.append('nome', dados.nome);
+  params.append('email', dados.email);
+  params.append('telefone', dados.telefone);
+  params.append('semanaGestacao', dados.semanaGestacao);
+  params.append('obstetra', dados.obstetra);
+  params.append('cidade', dados.cidade);
+  params.append('bairro', dados.bairro);
+  params.append('data', dados.data);
+  params.append('horario', dados.horario);
+  params.append('planoSaude', dados.planoSaude);
+  params.append('qualPlano', dados.qualPlano || ''); // Pode ser vazio
+  params.append('comoConheceu', dados.comoConheceu);
+  params.append('observacoes', dados.observacoes || ''); // Pode ser vazio
+
+  console.log("Enviando para Google Apps Script:", params.toString()); // Para debug
 
   fetch(WEB_APP_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: urlParams
+    body: params
   })
-  .then(response => response.json())
+  .then(response => {
+    console.log("Resposta do servidor:", response);
+    return response.json();
+  })
   .then(data => {
+    console.log("Dados recebidos:", data);
     if (data.status === 'ok') {
       mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
+      // Limpar formulário
       document.getElementById('agendamentoForm').reset();
       document.getElementById('field-qualplano').style.display = 'none';
+      // Limpar bordas vermelhas
+      document.querySelectorAll('input, select').forEach(el => {
+        el.style.borderColor = '';
+      });
     } else {
       // Mesmo com erro no servidor, o agendamento foi salvo localmente
       mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
       document.getElementById('agendamentoForm').reset();
       document.getElementById('field-qualplano').style.display = 'none';
+      document.querySelectorAll('input, select').forEach(el => {
+        el.style.borderColor = '';
+      });
     }
   })
   .catch(error => {
+    console.error("Erro na requisição:", error);
     // Em caso de erro de conexão, o agendamento ainda foi salvo localmente
     mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
     document.getElementById('agendamentoForm').reset();
     document.getElementById('field-qualplano').style.display = 'none';
+    document.querySelectorAll('input, select').forEach(el => {
+      el.style.borderColor = '';
+    });
   })
   .finally(() => {
     setLoading(false);
   });
 }
 
+// Adicionar event listeners para remover a borda vermelha quando o usuário preencher
+document.querySelectorAll('input, select').forEach(element => {
+  element.addEventListener('input', function() {
+    this.style.borderColor = '';
+  });
+  element.addEventListener('change', function() {
+    this.style.borderColor = '';
+  });
+});
+
 // Inicialização
 console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
-
