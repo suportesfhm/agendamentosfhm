@@ -314,6 +314,322 @@ const btnText = submitBtn.querySelector('.btn-text');
 const messageContainer = document.getElementById('messageContainer');
 
 // Função para carregar horários disponíveis do App Script
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Agende sua Visita - Maternidade</title>
+  <style>
+    :root{
+      --container-width: 980px;
+      --gap: 18px;
+      --accent: #d94f72;
+      --btn: #007b8f;
+      --bg: #fff7f9;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: var(--bg);
+      color:#333;
+    }
+
+    .container{
+      max-width: var(--container-width);
+      margin:40px auto;
+      background:#fff;
+      padding:28px;
+      border-radius:10px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    h1{
+      color: var(--accent);
+      margin:0 0 6px;
+      font-size:26px;
+    }
+
+    p.lead{
+      margin:0 0 22px;
+      color:#666;
+      line-height:1.45;
+    }
+
+    /* GRID FORM */
+    .form-grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--gap);
+      align-items:start;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+    }
+
+    label{
+      font-weight:600;
+      margin-bottom:6px;
+      font-size:13px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea{
+      border:1px solid #d0d0d0;
+      border-radius:8px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      transition:box-shadow .15s, border-color .15s;
+    }
+
+    input:focus, select:focus, textarea:focus{
+      box-shadow:0 0 0 3px rgba(0,123,140,0.07);
+      border-color:#9fbecd;
+    }
+
+    textarea{ min-height:90px; resize:vertical; }
+
+    /* Span helpers (12-grid) */
+    .span-12{ grid-column: span 12; }
+    .span-8{ grid-column: span 8; }
+    .span-7{ grid-column: span 7; }
+    .span-6{ grid-column: span 6; }
+    .span-5{ grid-column: span 5; }
+    .span-4{ grid-column: span 4; }
+    .span-3{ grid-column: span 3; }
+
+    /* Atenção (negrito) */
+    .alerta{
+      font-weight:700;
+      margin-top:6px;
+    }
+    .alerta ul{ margin:8px 0 0 0; padding-left:16px; font-weight:600; color:#444; }
+    .alerta li{ margin:6px 0; }
+
+    /* Checkbox inline + mais próximo do botão */
+    .checkbox-row{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-size:14px;
+      line-height:1.2;
+    }
+    .checkbox-row input[type="checkbox"]{
+      width:18px; height:18px;
+      margin:0;
+    }
+
+    /* Botão */
+    .actions{ text-align:center; margin-top:6px; }
+    button{
+      background: var(--btn);
+      color:#fff;
+      border:none;
+      padding:12px 22px;
+      border-radius:8px;
+      font-size:15px;
+      cursor:pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover{ filter:brightness(.93); }
+    button:disabled{
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+
+    /* Loading */
+    .loading{
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Mensagens */
+    .message{
+      padding: 12px;
+      border-radius: 8px;
+      margin: 10px 0;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .message.success{
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error{
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* Responsividade: tudo full-width em telas estreitas */
+    @media (max-width:800px){
+      .form-grid{ grid-template-columns: 1fr; gap:14px; }
+      .field{ grid-column: 1 / -1; }
+      .actions{ text-align:left; }
+    }
+
+    /* ajustes finos */
+    .small-note{ color:#777; font-size:13px; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Agende sua Visita</h1>
+    <p class="lead">Teremos o maior prazer em receber você e um acompanhante para uma visita guiada à nossa maternidade. Durante o passeio, você conhecerá toda a estrutura, instalações e serviços oferecidos.</p>
+
+    <form id="agendamentoForm" class="form-grid" novalidate>
+      <!-- Linha 1 -->
+      <div class="field span-7">
+        <label for="nome">Nome Completo *</label>
+        <input id="nome" name="nome" type="text" required>
+      </div>
+
+      <div class="field span-5">
+        <label for="email">E-mail *</label>
+        <input id="email" name="email" type="email" required>
+      </div>
+
+      <!-- Linha 2 -->
+      <div class="field span-3">
+        <label for="telefone">Telefone *</label>
+        <input id="telefone" name="telefone" type="tel" placeholder="(00) 00000-0000" required maxlength="15">
+      </div>
+
+      <div class="field span-3">
+        <label for="gestacao">Semana de Gestação *</label>
+        <input id="gestacao" name="gestacao" type="number" min="1" max="42" required>
+      </div>
+
+      <div class="field span-6">
+        <label for="obstetra">Obstetra *</label>
+        <input id="obstetra" name="obstetra" type="text" required>
+      </div>
+
+      <!-- Linha 3 -->
+      <div class="field span-4">
+        <label for="cidade">Cidade *</label>
+        <input id="cidade" name="cidade" type="text" required>
+      </div>
+
+      <div class="field span-8">
+        <label for="bairro">Bairro *</label>
+        <input id="bairro" name="bairro" type="text" required>
+      </div>
+
+      <!-- Linha 4 -->
+      <div class="field span-3">
+        <label for="data">Data *</label>
+        <input id="data" name="data" type="date" required>
+      </div>
+
+      <div class="field span-3">
+        <label for="horario">Horário *</label>
+        <select id="horario" name="horario" required>
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+
+      <div class="field span-3">
+        <label for="plano">Possui plano de saúde? *</label>
+        <select id="plano" name="plano" required>
+          <option value="">Selecione...</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+
+      <div class="field span-3" id="field-qualplano" style="display:none;">
+        <label for="qualplano">Se sim, qual?</label>
+        <input id="qualplano" name="qualplano" type="text">
+      </div>
+
+      <!-- Linha 5 -->
+      <div class="field span-6">
+        <label for="conheceu">Como conheceu a maternidade? *</label>
+        <select id="conheceu" name="conheceu" required>
+          <option value="">Selecione...</option>
+          <option>Indicação de amigo(a)</option>
+          <option>Redes sociais</option>
+          <option>Médico</option>
+          <option>Outros</option>
+        </select>
+      </div>
+
+      <div class="field span-6">
+        <label for="obs">Observações</label>
+        <textarea id="obs" name="obs" placeholder="Se tiver alguma observação, escreva aqui..."></textarea>
+      </div>
+
+      <!-- Atenção -->
+      <div class="span-12">
+        <div class="alerta">
+          Atenção:
+          <ul>
+            <li>Você poderá levar apenas um acompanhante.</li>
+            <li>Tolerância para atraso de no máximo 15 minutos.</li>
+            <li>Horários disponíveis conforme o dia da semana.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Checkbox termos (inline e próximo) -->
+      <div class="span-12">
+        <label class="checkbox-row">
+          <input id="termos" name="termos" type="checkbox" required>
+          Li e aceito os termos de uso dos dados conforme indicado na Política de Privacidade.
+        </label>
+      </div>
+
+      <!-- Mensagens -->
+      <div class="span-12">
+        <div id="messageContainer"></div>
+      </div>
+
+      <!-- Botão -->
+      <div class="span-12 actions">
+        <button type="submit" id="submitBtn">
+          <span class="btn-text">Agendar Visita</span>
+        </button>
+        <div class="small-note">* Campos obrigatórios</div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+// URL DO WEB APP
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbymcGV_VzLEae1NS6_sJ6w8lsPmc1VJyjHfXSVXpE-lspXy63gc3Khtkujuowtv-qDW/exec";
+
+// Elementos do DOM
+const selectHorario = document.getElementById('horario');
+const inputData = document.getElementById('data');
+const submitBtn = document.getElementById('submitBtn');
+const btnText = submitBtn.querySelector('.btn-text');
+const messageContainer = document.getElementById('messageContainer');
+
+// Função para carregar horários disponíveis do App Script COM FALLBACK
 function carregarHorariosParaData(dataSelecionada) {
   selectHorario.innerHTML = '<option value="">Carregando...</option>';
   selectHorario.disabled = true;
@@ -335,11 +651,20 @@ function carregarHorariosParaData(dataSelecionada) {
     return;
   }
 
-  // Buscar horários disponíveis do App Script
+  // Primeiro, aplicar as regras básicas de horários localmente (FALLBACK)
+  const horariosBase = obterHorariosBase(dataSelecionada);
+  
+  if (horariosBase.length === 0) {
+    selectHorario.innerHTML = '<option value="">Não há atendimento neste dia</option>';
+    selectHorario.disabled = false;
+    return;
+  }
+
+  // Depois buscar disponibilidade real do App Script (SISTEMA PRINCIPAL)
   const callbackName = 'horariosCallback_' + Date.now();
   
   window[callbackName] = function(response) {
-    console.log("Resposta horários:", response);
+    console.log("✅ Resposta horários do App Script:", response);
     
     selectHorario.innerHTML = '<option value="">Selecione...</option>';
     
@@ -351,11 +676,20 @@ function carregarHorariosParaData(dataSelecionada) {
           opt.textContent = h;
           selectHorario.appendChild(opt);
         });
+        console.log(`🎯 Horários disponíveis do App Script: ${response.horarios.join(', ')}`);
       } else {
-        selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
+        selectHorario.innerHTML = '<option value="">Horários lotados</option>';
+        console.log("💡 App Script: Todos horários lotados");
       }
     } else {
-      selectHorario.innerHTML = '<option value="">Erro ao carregar horários</option>';
+      // FALLBACK: Se der erro no App Script, usar horários base
+      console.warn("⚠️ Erro no App Script, usando FALLBACK (horários base)");
+      horariosBase.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h;
+        selectHorario.appendChild(opt);
+      });
     }
     
     selectHorario.disabled = false;
@@ -366,12 +700,45 @@ function carregarHorariosParaData(dataSelecionada) {
   const script = document.createElement('script');
   script.src = `${WEB_APP_URL}?acao=listarHorariosDisponiveis&data=${encodeURIComponent(dataSelecionada)}&callback=${callbackName}`;
   script.onerror = function() {
-    selectHorario.innerHTML = '<option value="">Erro de conexão</option>';
+    // FALLBACK: Se houver erro de conexão, usar horários base
+    console.error("❌ Erro de conexão com App Script, usando FALLBACK");
+    selectHorario.innerHTML = '<option value="">Selecione...</option>';
+    horariosBase.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = h;
+      selectHorario.appendChild(opt);
+    });
     selectHorario.disabled = false;
     delete window[callbackName];
   };
   
   document.head.appendChild(script);
+}
+
+// Função FALLBACK para obter horários base baseado no dia da semana
+function obterHorariosBase(dataSelecionada) {
+  if (!dataSelecionada) return [];
+  
+  const dataObj = new Date(dataSelecionada + 'T00:00:00');
+  const diaSemana = dataObj.getDay();
+  
+  console.log(`📅 Data: ${dataSelecionada}, Dia da semana: ${diaSemana}`);
+  
+  switch (diaSemana) {
+    case 0: // Domingo
+      return ["10:00"];
+    case 1: // Segunda
+    case 2: // Terça  
+    case 3: // Quarta
+    case 5: // Sexta
+      return ["10:00", "15:00"];
+    case 6: // Sábado
+      return ["15:00"];
+    case 4: // Quinta (fechado)
+    default:
+      return [];
+  }
 }
 
 // Mostrar/ocultar campo do plano de saúde
@@ -389,6 +756,204 @@ document.getElementById('plano').addEventListener('change', function() {
   }
 });
 
+// Formatar telefone
+document.getElementById('telefone').addEventListener('input', function(e) {
+  let value = e.target.value.replace(/\D/g, '');
+  
+  if (value.length <= 11) {
+    if (value.length === 11) {
+      value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (value.length === 10) {
+      value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    } else if (value.length > 6) {
+      value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else if (value.length > 2) {
+      value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+    } else if (value.length > 0) {
+      value = value.replace(/(\d{0,2})/, '($1');
+    }
+    
+    e.target.value = value;
+  }
+});
+
+// Event listener para mudança de data
+inputData.addEventListener('change', function() {
+  carregarHorariosParaData(this.value);
+});
+
+// Mostrar mensagem
+function mostrarMensagem(mensagem, tipo) {
+  messageContainer.innerHTML = `<div class="message ${tipo}">${mensagem}</div>`;
+  
+  if (tipo === 'success') {
+    setTimeout(() => {
+      messageContainer.innerHTML = '';
+    }, 5000);
+  }
+}
+
+// Ativar/desativar botão de envio
+function setLoading(loading) {
+  if (loading) {
+    submitBtn.disabled = true;
+    btnText.innerHTML = '<div class="loading"></div>Enviando...';
+  } else {
+    submitBtn.disabled = false;
+    btnText.textContent = 'Agendar Visita';
+  }
+}
+
+// Envio do formulário
+document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Validação dos termos
+  if (!document.getElementById('termos').checked) {
+    mostrarMensagem('Você precisa aceitar os termos de uso antes de enviar.', 'error');
+    return;
+  }
+
+  // Coletar dados do formulário
+  const dados = {
+    nome: document.getElementById('nome').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    telefone: document.getElementById('telefone').value.trim(),
+    semanaGestacao: document.getElementById('gestacao').value.trim(),
+    obstetra: document.getElementById('obstetra').value.trim(),
+    cidade: document.getElementById('cidade').value.trim(),
+    bairro: document.getElementById('bairro').value.trim(),
+    data: document.getElementById('data').value,
+    horario: document.getElementById('horario').value,
+    planoSaude: document.getElementById('plano').value,
+    qualPlano: document.getElementById('qualplano').value.trim(),
+    comoConheceu: document.getElementById('conheceu').value,
+    observacoes: document.getElementById('obs').value.trim()
+  };
+
+  console.log("📤 Dados coletados para agendamento:", dados);
+
+  // Validar campos obrigatórios
+  const camposObrigatorios = [
+    { campo: 'nome', valor: dados.nome, elemento: document.getElementById('nome') },
+    { campo: 'email', valor: dados.email, elemento: document.getElementById('email') },
+    { campo: 'telefone', valor: dados.telefone, elemento: document.getElementById('telefone') },
+    { campo: 'semanaGestacao', valor: dados.semanaGestacao, elemento: document.getElementById('gestacao') },
+    { campo: 'obstetra', valor: dados.obstetra, elemento: document.getElementById('obstetra') },
+    { campo: 'cidade', valor: dados.cidade, elemento: document.getElementById('cidade') },
+    { campo: 'bairro', valor: dados.bairro, elemento: document.getElementById('bairro') },
+    { campo: 'data', valor: dados.data, elemento: document.getElementById('data') },
+    { campo: 'horario', valor: dados.horario, elemento: document.getElementById('horario') },
+    { campo: 'planoSaude', valor: dados.planoSaude, elemento: document.getElementById('plano') },
+    { campo: 'comoConheceu', valor: dados.comoConheceu, elemento: document.getElementById('conheceu') }
+  ];
+
+  const camposVazios = camposObrigatorios.filter(item => !item.valor);
+  
+  if (camposVazios.length > 0) {
+    console.log("❌ Campos vazios:", camposVazios);
+    mostrarMensagem('Preencha todos os campos obrigatórios marcados com *', 'error');
+    
+    // Destacar campos vazios
+    camposVazios.forEach(item => {
+      if (item.elemento) {
+        item.elemento.style.borderColor = 'red';
+        item.elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    return;
+  }
+
+  // Validar email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(dados.email)) {
+    mostrarMensagem('Por favor, insira um email válido', 'error');
+    document.getElementById('email').style.borderColor = 'red';
+    return;
+  }
+
+  setLoading(true);
+
+  // Enviar para Google Apps Script usando JSONP
+  enviarParaGoogleAppsScript(dados);
+});
+
+// Função para enviar para Google Apps Script usando JSONP
+function enviarParaGoogleAppsScript(dados) {
+  // Criar callback único para JSONP
+  const callbackName = 'callback_' + Date.now();
+  
+  // Construir URL com parâmetros
+  const params = new URLSearchParams();
+  params.append('nome', dados.nome);
+  params.append('email', dados.email);
+  params.append('telefone', dados.telefone);
+  params.append('semanaGestacao', dados.semanaGestacao);
+  params.append('obstetra', dados.obstetra);
+  params.append('cidade', dados.cidade);
+  params.append('bairro', dados.bairro);
+  params.append('data', dados.data);
+  params.append('horario', dados.horario);
+  params.append('planoSaude', dados.planoSaude);
+  params.append('qualPlano', dados.qualPlano || '');
+  params.append('comoConheceu', dados.comoConheceu);
+  params.append('observacoes', dados.observacoes || '');
+  params.append('callback', callbackName);
+
+  const urlComParams = `${WEB_APP_URL}?${params.toString()}`;
+
+  console.log("🚀 Enviando para Google Apps Script:", urlComParams);
+
+  // Criar função de callback global
+  window[callbackName] = function(response) {
+    console.log("📨 Resposta do servidor:", response);
+    
+    if (response.status === 'ok') {
+      mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
+      // Limpar formulário
+      document.getElementById('agendamentoForm').reset();
+      document.getElementById('field-qualplano').style.display = 'none';
+      // Limpar bordas vermelhas
+      document.querySelectorAll('input, select').forEach(el => {
+        el.style.borderColor = '';
+      });
+    } else {
+      mostrarMensagem('❌ ' + (response.message || 'Erro ao realizar agendamento'), 'error');
+    }
+    
+    // Limpar callback
+    delete window[callbackName];
+    setLoading(false);
+  };
+
+  // Criar script para JSONP
+  const script = document.createElement('script');
+  script.src = urlComParams;
+  script.onerror = function() {
+    console.error("❌ Erro na requisição JSONP");
+    mostrarMensagem('❌ Erro de conexão. Tente novamente.', 'error');
+    delete window[callbackName];
+    setLoading(false);
+  };
+  
+  document.head.appendChild(script);
+}
+
+// Adicionar event listeners para remover a borda vermelha quando o usuário preencher
+document.querySelectorAll('input, select').forEach(element => {
+  element.addEventListener('input', function() {
+    this.style.borderColor = '';
+  });
+  element.addEventListener('change', function() {
+    this.style.borderColor = '';
+  });
+});
+
+// Inicialização
+console.log("✅ Sistema de agendamento carregado com FALLBACK!");
+  </script>
+</body>
+</html>
 // Formatar telefone
 document.getElementById('telefone').addEventListener('input', function(e) {
   let value = e.target.value.replace(/\D/g, '');
@@ -587,3 +1152,4 @@ console.log("✅ Sistema de agendamento carregado!");
   </script>
 </body>
 </html>
+
