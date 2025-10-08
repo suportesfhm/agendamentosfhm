@@ -330,9 +330,8 @@ function salvarAgendamentoLocal(dados) {
 function obterHorariosBase(dataSelecionada) {
   if (!dataSelecionada) return [];
   
-  const dataObj = new Date(dataSelecionada + 'T00:00:00'); // Corrige o fuso horário
-  const diaSemana = dataObj.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
-  console.log("Data:", dataSelecionada, "Dia da semana:", diaSemana);
+  const dataObj = new Date(dataSelecionada + 'T00:00:00');
+  const diaSemana = dataObj.getDay();
   
   switch (diaSemana) {
     case 0: // Domingo
@@ -368,7 +367,6 @@ function carregarHorariosParaData(dataSelecionada) {
     return;
   }
 
-  // Verificar se a data é no passado
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   const dataSelecionadaObj = new Date(dataSelecionada + 'T00:00:00');
@@ -383,12 +381,9 @@ function carregarHorariosParaData(dataSelecionada) {
     const horariosBase = obterHorariosBase(dataSelecionada);
     const horariosDisponiveis = [];
     
-    console.log("Horários base para", dataSelecionada, ":", horariosBase);
-    
-    // Verificar disponibilidade para cada horário base
     horariosBase.forEach(horario => {
       const count = contarAgendamentos(dataSelecionada, horario);
-      if (count < 5) { // Máximo 5 agendamentos por horário
+      if (count < 5) {
         horariosDisponiveis.push(horario);
       }
     });
@@ -479,7 +474,6 @@ function setLoading(loading) {
 document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
-  // Validação dos termos
   if (!document.getElementById('termos').checked) {
     mostrarMensagem('Você precisa aceitar os termos de uso antes de enviar.', 'error');
     return;
@@ -525,7 +519,6 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     console.log("Campos vazios:", camposVazios);
     mostrarMensagem('Preencha todos os campos obrigatórios marcados com *', 'error');
     
-    // Destacar campos vazios
     camposVazios.forEach(item => {
       if (item.elemento) {
         item.elemento.style.borderColor = 'red';
@@ -535,7 +528,6 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     return;
   }
 
-  // Validar email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(dados.email)) {
     mostrarMensagem('Por favor, insira um email válido', 'error');
@@ -543,11 +535,10 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
     return;
   }
 
-  // Verificar se ainda há vagas disponíveis (concorrência)
   const count = contarAgendamentos(dados.data, dados.horario);
   if (count >= 5) {
     mostrarMensagem('❌ Desculpe, este horário acabou de ficar lotado. Por favor, selecione outro horário.', 'error');
-    carregarHorariosParaData(dados.data); // Recarregar horários
+    carregarHorariosParaData(dados.data);
     return;
   }
 
@@ -556,13 +547,16 @@ document.getElementById('agendamentoForm').addEventListener('submit', function(e
   // Salvar localmente
   salvarAgendamentoLocal(dados);
   
-  // Tentar enviar para o Google Apps Script (opcional)
+  // Enviar para Google Apps Script usando JSONP
   enviarParaGoogleAppsScript(dados);
 });
 
-// Função para tentar enviar para o Google Apps Script
+// Função para enviar para Google Apps Script usando JSONP
 function enviarParaGoogleAppsScript(dados) {
-  // Construir URL com parâmetros GET (mais compatível com Google Apps Script)
+  // Criar callback único para JSONP
+  const callbackName = 'callback_' + Date.now();
+  
+  // Construir URL com parâmetros
   const params = new URLSearchParams();
   params.append('nome', dados.nome);
   params.append('email', dados.email);
@@ -577,29 +571,24 @@ function enviarParaGoogleAppsScript(dados) {
   params.append('qualPlano', dados.qualPlano || '');
   params.append('comoConheceu', dados.comoConheceu);
   params.append('observacoes', dados.observacoes || '');
+  params.append('callback', callbackName);
 
   const urlComParams = `${WEB_APP_URL}?${params.toString()}`;
 
-  console.log("Enviando para Google Apps Script via GET:", urlComParams);
+  console.log("Enviando para Google Apps Script:", urlComParams);
 
-  fetch(urlComParams)
-  .then(response => {
+  // Criar função de callback global
+  window[callbackName] = function(response) {
     console.log("Resposta do servidor:", response);
-    return response.json();
-  })
-  .then(data => {
-    console.log("Dados recebidos:", data);
-    if (data.status === 'ok') {
+    
+    if (response.status === 'ok') {
       mostrarMensagem('✅ Agendamento realizado com sucesso! Em breve entraremos em contato para confirmação.', 'success');
-      // Limpar formulário
       document.getElementById('agendamentoForm').reset();
       document.getElementById('field-qualplano').style.display = 'none';
-      // Limpar bordas vermelhas
       document.querySelectorAll('input, select').forEach(el => {
         el.style.borderColor = '';
       });
     } else {
-      // Mesmo com erro no servidor, o agendamento foi salvo localmente
       mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
       document.getElementById('agendamentoForm').reset();
       document.getElementById('field-qualplano').style.display = 'none';
@@ -607,20 +596,28 @@ function enviarParaGoogleAppsScript(dados) {
         el.style.borderColor = '';
       });
     }
-  })
-  .catch(error => {
-    console.error("Erro na requisição:", error);
-    // Em caso de erro de conexão, o agendamento ainda foi salvo localmente
+    
+    // Limpar callback
+    delete window[callbackName];
+    setLoading(false);
+  };
+
+  // Criar script para JSONP
+  const script = document.createElement('script');
+  script.src = urlComParams;
+  script.onerror = function() {
+    console.error("Erro na requisição JSONP");
     mostrarMensagem('✅ Agendamento salvo localmente! Entraremos em contato em breve.', 'success');
     document.getElementById('agendamentoForm').reset();
     document.getElementById('field-qualplano').style.display = 'none';
     document.querySelectorAll('input, select').forEach(el => {
       el.style.borderColor = '';
     });
-  })
-  .finally(() => {
+    delete window[callbackName];
     setLoading(false);
-  });
+  };
+  
+  document.head.appendChild(script);
 }
 
 // Adicionar event listeners para remover a borda vermelha quando o usuário preencher
