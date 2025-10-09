@@ -391,8 +391,7 @@
             const bairro = escapeHtml(ag.bairro || '');
             const como = escapeHtml(ag.comoConheceu || '');
             const obs = escapeHtml(ag.observacoes || '');
-            const status = ag.status || 'Pendente';
-
+            
             const statusClass = status.toString().toLowerCase().includes('pend') ? 'status-pendente' : 'status-confirmado';
 
             return `
@@ -485,3 +484,4 @@
   </script>
 </body>
 </html>
+
