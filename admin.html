@@ -57,9 +57,57 @@
     .notice.success{ background:#d4edda; color:#155724; border:1px solid #c3e6cb; } .notice.error{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
 
     .empty-state{ text-align:center; padding:40px; color:var(--light-text); } .export-section{ text-align:right; margin-bottom:20px; }
+
+    /* Modal de timeout */
+    .timeout-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .timeout-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .timeout-title {
+      color: var(--accent);
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+    .timeout-message {
+      margin-bottom: 25px;
+      color: var(--text);
+    }
+    .timeout-timer {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
+  <!-- Modal de Timeout -->
+  <div class="timeout-modal" id="timeoutModal">
+    <div class="timeout-content">
+      <div class="timeout-title">⚠️ Sessão Expirada</div>
+      <div class="timeout-message">Sua sessão expirou por inatividade. Você será desconectado em <span id="timeoutCountdown">30</span> segundos.</div>
+      <div class="timeout-timer" id="timeoutTimer"></div>
+      <button type="button" class="login-btn" id="stayLoggedInBtn">Permanecer Logado</button>
+    </div>
+  </div>
+
   <!-- Login -->
   <div class="login-container" id="loginDiv">
     <div class="login-header">
@@ -143,7 +191,80 @@
     const LOGIN_USER = "admin";
     const LOGIN_PASS = "1234";
 
-    // armazenamento
+    // ============ CONFIGURAÇÃO DO TIMEOUT ============
+    const TIMEOUT_MINUTES = 30; // Tempo de inatividade em minutos antes do logout
+    const WARNING_SECONDS = 30; // Tempo de aviso antes do logout (em segundos)
+    let inactivityTimer;
+    let warningTimer;
+    let lastActivityTime;
+
+    // ============ SISTEMA DE INATIVIDADE ============
+    function resetInactivityTimer() {
+      // Limpa os timers existentes
+      clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
+      
+      // Atualiza o tempo da última atividade
+      lastActivityTime = Date.now();
+      
+      // Se estiver logado, inicia o timer de inatividade
+      if (localStorage.getItem('logado') === 'sim') {
+        inactivityTimer = setTimeout(showTimeoutWarning, TIMEOUT_MINUTES * 60 * 1000);
+      }
+    }
+
+    function showTimeoutWarning() {
+      // Mostra o modal de aviso
+      const modal = document.getElementById('timeoutModal');
+      const countdownElement = document.getElementById('timeoutCountdown');
+      const timerElement = document.getElementById('timeoutTimer');
+      
+      modal.style.display = 'flex';
+      
+      let secondsLeft = WARNING_SECONDS;
+      
+      // Atualiza o contador
+      warningTimer = setInterval(() => {
+        secondsLeft--;
+        countdownElement.textContent = secondsLeft;
+        
+        // Atualiza o timer visual
+        const minutes = Math.floor(secondsLeft / 60);
+        const seconds = secondsLeft % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (secondsLeft <= 0) {
+          clearInterval(warningTimer);
+          forceLogout();
+        }
+      }, 1000);
+    }
+
+    function hideTimeoutWarning() {
+      const modal = document.getElementById('timeoutModal');
+      modal.style.display = 'none';
+      clearInterval(warningTimer);
+      resetInactivityTimer();
+    }
+
+    function forceLogout() {
+      // Limpa tudo e faz logout
+      clearTimeout(inactivityTimer);
+      clearInterval(warningTimer);
+      logout();
+      alert('Sua sessão expirou por inatividade. Por favor, faça login novamente.');
+    }
+
+    // Eventos que resetam o timer de inatividade
+    function setupActivityListeners() {
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+      
+      events.forEach(event => {
+        document.addEventListener(event, resetInactivityTimer, true);
+      });
+    }
+
+    // ============ ARMZENAMENTO ============
     let FULL_AGENDAMENTOS = [];   // dados brutos carregados do servidor (normalizados em _dateISO/_time)
     let SHOWN_AGENDAMENTOS = [];  // dados filtrados que estão sendo exibidos/exportados
 
@@ -319,6 +440,9 @@
         document.getElementById('panelDiv').style.display = 'block';
         carregarAgendamentos();
         showLoginNotice(null);
+        
+        // Inicia o monitoramento de inatividade após o login
+        resetInactivityTimer();
       } else {
         showLoginNotice('Usuário ou senha incorretos.');
       }
@@ -332,6 +456,10 @@
       document.getElementById('pass').value = '';
       FULL_AGENDAMENTOS = [];
       SHOWN_AGENDAMENTOS = [];
+      
+      // Limpa os timers ao fazer logout
+      clearTimeout(inactivityTimer);
+      clearInterval(warningTimer);
     }
 
     // ============ CARREGAR & FILTRAR ============
@@ -473,15 +601,21 @@
     document.getElementById('aplicarFiltrosBtn').addEventListener('click', carregarAgendamentos);
     document.getElementById('exportBtn').addEventListener('click', exportarExcel);
     document.getElementById('pass').addEventListener('keypress', function(e){ if (e.key === 'Enter') login(); });
+    document.getElementById('stayLoggedInBtn').addEventListener('click', hideTimeoutWarning);
 
     window.onload = function() {
+      // Configura os listeners de atividade
+      setupActivityListeners();
+      
       if (localStorage.getItem('logado') === 'sim') {
         document.getElementById('loginDiv').style.display = 'none';
         document.getElementById('panelDiv').style.display = 'block';
         carregarAgendamentos();
+        
+        // Inicia o monitoramento de inatividade
+        resetInactivityTimer();
       }
     };
   </script>
 </body>
 </html>
-
