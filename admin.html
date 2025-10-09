@@ -57,8 +57,6 @@
     .notice.success{ background:#d4edda; color:#155724; border:1px solid #c3e6cb; } .notice.error{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
 
     .empty-state{ text-align:center; padding:40px; color:var(--light-text); } .export-section{ text-align:right; margin-bottom:20px; }
-    
-    .debug-info { background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -191,50 +189,120 @@
       return '';
     }
 
-    // NOVA FUNÇÃO: Debug para ver o que está vindo do servidor
-    function debugHorario(ag, index) {
-      console.log(`=== Agendamento ${index} ===`);
-      console.log('Nome:', ag.nome);
-      console.log('Data raw:', ag.data);
-      console.log('Horario raw:', ag.horario);
-      console.log('Timestamp:', ag.timestamp);
+    // FUNÇÃO CORRIGIDA: Converte para os horários válidos 10:00 ou 15:00
+    function extractTimeHHMM(s) {
+      if (!s) return '';
+      s = String(s).trim();
       
-      // Testar diferentes formas de extrair
-      console.log('--- Tentativas de extração ---');
-      console.log('extractTimeHHMM(ag.horario):', extractTimeHHMM(ag.horario));
-      console.log('extractTimeHHMM(ag.data):', extractTimeHHMM(ag.data));
-      console.log('extractTimeHHMM(ag.timestamp):', extractTimeHHMM(ag.timestamp));
+      console.log('Horário recebido:', s);
+
+      // CASO 1: Se já estiver no formato HH:MM (10:00, 15:00, etc)
+      const m = s.match(/^(\d{1,2}):(\d{2})$/);
+      if (m) {
+        console.log('Horário já formatado:', s);
+        return s;
+      }
+
+      // CASO 2: Se for timestamp do Sheets (1899-12-30T...)
+      if (s.includes('1899-12-30')) {
+        console.log('Detectado formato Sheets - convertendo timestamp');
+        try {
+          const dObj = new Date(s);
+          if (!isNaN(dObj.getTime())) {
+            // O timestamp do Sheets representa um horário puro
+            const horasUTC = dObj.getUTCHours();
+            const minutosUTC = dObj.getUTCMinutes();
+            
+            console.log('Timestamp Sheets - UTC:', `${horasUTC}:${minutosUTC}`);
+            
+            // Converter para horário brasileiro (UTC-3)
+            let horasBrasil = horasUTC - 3;
+            if (horasBrasil < 0) horasBrasil += 24;
+            
+            const horarioExtraido = `${pad2(horasBrasil)}:${pad2(minutosUTC)}`;
+            console.log('Horário Brasil (UTC-3):', horarioExtraido);
+            
+            // MAPEAR PARA OS HORÁRIOS VÁLIDOS
+            let horarioFinal = '';
+            
+            // Se o horário extraído estiver próximo de 10:00 (manhã)
+            if ((horasBrasil === 10 && minutosUTC >= 0 && minutosUTC <= 59) || 
+                (horasBrasil === 9 && minutosUTC >= 45)) {
+              horarioFinal = '10:00';
+            }
+            // Se o horário extraído estiver próximo de 15:00 (tarde)
+            else if ((horasBrasil === 15 && minutosUTC >= 0 && minutosUTC <= 59) || 
+                     (horasBrasil === 14 && minutosUTC >= 45)) {
+              horarioFinal = '15:00';
+            }
+            // Se não se encaixar em nenhum, usar lógica baseada no período do dia
+            else {
+              horarioFinal = horasBrasil < 12 ? '10:00' : '15:00';
+            }
+            
+            console.log('Horário final mapeado:', horarioFinal);
+            return horarioFinal;
+          }
+        } catch (e) {
+          console.log('Erro ao converter timestamp Sheets:', e);
+        }
+      }
+
+      // CASO 3: Tentar extrair e mapear para horários válidos
+      const m2 = s.match(/(\d{1,2}):(\d{2})/);
+      if (m2) {
+        const horas = parseInt(m2[1]);
+        const minutos = parseInt(m2[2]);
+        
+        let horarioFinal = '';
+        
+        // Mapear para os horários válidos
+        if ((horas === 10 && minutos >= 0 && minutos <= 59) || 
+            (horas === 9 && minutos >= 45)) {
+          horarioFinal = '10:00';
+        } else if ((horas === 15 && minutos >= 0 && minutos <= 59) || 
+                   (horas === 14 && minutos >= 45)) {
+          horarioFinal = '15:00';
+        } else {
+          horarioFinal = horas < 12 ? '10:00' : '15:00';
+        }
+        
+        console.log('Horário extraído e mapeado:', `${horas}:${pad2(minutos)} -> ${horarioFinal}`);
+        return horarioFinal;
+      }
+
+      console.log('Nenhum horário válido encontrado');
+      return '';
+    }
+
+    // normaliza um objeto agendamento
+    function normalizeAg(ag, index) {
+      const rawDate = ag.data || '';
+      const rawTime = ag.horario || '';
+
+      console.log(`=== Normalizando agendamento ${index} ===`);
+      console.log('Nome:', ag.nome);
+      console.log('Data raw:', rawDate);
+      console.log('Horario raw:', rawTime);
+
+      // Para data: extrai do campo 'data'
+      let dateISO = extractDateISO(rawDate);
+      if (!dateISO && ag.timestamp) dateISO = extractDateISO(ag.timestamp);
+
+      // Para horário: usa APENAS o campo 'horario'
+      const timeHH = extractTimeHHMM(rawTime);
+
+      ag._dateISO = dateISO;
+      ag._timeHHMM = timeHH;
+      ag._displayDate = dateISO ? `${dateISO.split('-')[2]}/${dateISO.split('-')[1]}/${dateISO.split('-')[0]}` : '';
+
+      console.log('Resultado final:');
+      console.log('_dateISO:', ag._dateISO);
+      console.log('_timeHHMM:', ag._timeHHMM);
+      console.log('_displayDate:', ag._displayDate);
       console.log('================');
     }
 
-    // FUNÇÃO MUITO SIMPLES - pois o Google Apps Script já formatou o horário
-function extractTimeHHMM(s) {
-  if (!s) return '';
-  s = String(s).trim();
-  
-  console.log('Horário recebido:', s);
-
-  // O horário já deve vir formatado como "10:00" ou "15:00"
-  // Apenas verifica se está no formato correto
-  const m = s.match(/^(\d{1,2}):(\d{2})$/);
-  if (m) {
-    console.log('Horário já formatado:', s);
-    return s; // Retorna direto, já está no formato correto
-  }
-
-  // Se não estiver no formato esperado, tenta extrair
-  const m2 = s.match(/(\d{1,2}):(\d{2})/);
-  if (m2) {
-    const horas = pad2(m2[1]);
-    const minutos = pad2(m2[2]);
-    const resultado = `${horas}:${minutos}`;
-    console.log('Horário extraído:', resultado);
-    return resultado;
-  }
-
-  console.log('Nenhum horário válido encontrado');
-  return '';
-}
     // ============ AUTENTICAÇÃO ============
     function showLoginNotice(msg) {
       const el = document.getElementById('loginNotice');
@@ -332,7 +400,6 @@ function extractTimeHHMM(s) {
                 <div class="card-header">
                   <h3 class="paciente-nome">${nome}</h3>
                   <div class="agendamento-info"><span class="info-label">Data:</span> ${displayDate} ${horario ? 'às ' + horario : ''}</div>
-                  ${ag._timeHHMM ? `<div class="debug-info">Debug: ${ag.horario} → ${ag._timeHHMM}</div>` : ''}
                 </div>
 
                 <div class="agendamento-info"><span class="info-label">Telefone:</span> ${telefone}</div>
@@ -418,4 +485,3 @@ function extractTimeHHMM(s) {
   </script>
 </body>
 </html>
-
