@@ -57,57 +57,9 @@
     .notice.success{ background:#d4edda; color:#155724; border:1px solid #c3e6cb; } .notice.error{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
 
     .empty-state{ text-align:center; padding:40px; color:var(--light-text); } .export-section{ text-align:right; margin-bottom:20px; }
-
-    /* Modal de timeout */
-    .timeout-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    .timeout-content {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      text-align: center;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    .timeout-title {
-      color: var(--accent);
-      font-size: 24px;
-      margin-bottom: 15px;
-    }
-    .timeout-message {
-      margin-bottom: 25px;
-      color: var(--text);
-    }
-    .timeout-timer {
-      font-size: 18px;
-      font-weight: bold;
-      color: var(--accent);
-      margin-bottom: 20px;
-    }
   </style>
 </head>
 <body>
-  <!-- Modal de Timeout -->
-  <div class="timeout-modal" id="timeoutModal">
-    <div class="timeout-content">
-      <div class="timeout-title">⚠️ Sessão Expirada</div>
-      <div class="timeout-message">Sua sessão expirou por inatividade. Você será desconectado em <span id="timeoutCountdown">30</span> segundos.</div>
-      <div class="timeout-timer" id="timeoutTimer"></div>
-      <button type="button" class="login-btn" id="stayLoggedInBtn">Permanecer Logado</button>
-    </div>
-  </div>
-
   <!-- Login -->
   <div class="login-container" id="loginDiv">
     <div class="login-header">
@@ -190,83 +142,13 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyyKOvISjd_OcJ53l55xXMiFehhGOlV50HFGCQ7cyS_B6w0h1cQD7_TCzOTw4HKKWic/exec";
     const LOGIN_USER = "admin";
     const LOGIN_PASS = "1234";
+    const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutos em milissegundos
 
-    // ============ CONFIGURAÇÃO DO TIMEOUT ============
-    const TIMEOUT_MINUTES = 30; // Tempo de inatividade em minutos antes do logout
-    const WARNING_SECONDS = 30; // Tempo de aviso antes do logout (em segundos)
-    let inactivityTimer;
-    let warningTimer;
+    // armazenamento
+    let FULL_AGENDAMENTOS = [];
+    let SHOWN_AGENDAMENTOS = [];
+    let logoutTimeout;
     let lastActivityTime;
-
-    // ============ SISTEMA DE INATIVIDADE ============
-    function resetInactivityTimer() {
-      // Limpa os timers existentes
-      clearTimeout(inactivityTimer);
-      clearTimeout(warningTimer);
-      
-      // Atualiza o tempo da última atividade
-      lastActivityTime = Date.now();
-      
-      // Se estiver logado, inicia o timer de inatividade
-      if (localStorage.getItem('logado') === 'sim') {
-        inactivityTimer = setTimeout(showTimeoutWarning, TIMEOUT_MINUTES * 60 * 1000);
-      }
-    }
-
-    function showTimeoutWarning() {
-      // Mostra o modal de aviso
-      const modal = document.getElementById('timeoutModal');
-      const countdownElement = document.getElementById('timeoutCountdown');
-      const timerElement = document.getElementById('timeoutTimer');
-      
-      modal.style.display = 'flex';
-      
-      let secondsLeft = WARNING_SECONDS;
-      
-      // Atualiza o contador
-      warningTimer = setInterval(() => {
-        secondsLeft--;
-        countdownElement.textContent = secondsLeft;
-        
-        // Atualiza o timer visual
-        const minutes = Math.floor(secondsLeft / 60);
-        const seconds = secondsLeft % 60;
-        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
-        if (secondsLeft <= 0) {
-          clearInterval(warningTimer);
-          forceLogout();
-        }
-      }, 1000);
-    }
-
-    function hideTimeoutWarning() {
-      const modal = document.getElementById('timeoutModal');
-      modal.style.display = 'none';
-      clearInterval(warningTimer);
-      resetInactivityTimer();
-    }
-
-    function forceLogout() {
-      // Limpa tudo e faz logout
-      clearTimeout(inactivityTimer);
-      clearInterval(warningTimer);
-      logout();
-      alert('Sua sessão expirou por inatividade. Por favor, faça login novamente.');
-    }
-
-    // Eventos que resetam o timer de inatividade
-    function setupActivityListeners() {
-      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-      
-      events.forEach(event => {
-        document.addEventListener(event, resetInactivityTimer, true);
-      });
-    }
-
-    // ============ ARMZENAMENTO ============
-    let FULL_AGENDAMENTOS = [];   // dados brutos carregados do servidor (normalizados em _dateISO/_time)
-    let SHOWN_AGENDAMENTOS = [];  // dados filtrados que estão sendo exibidos/exportados
 
     // ============ HELPERS ============
     function pad2(n){ return String(n).padStart(2,'0'); }
@@ -286,18 +168,15 @@
       if (!s) return '';
       s = String(s).trim();
 
-      // já no formato yyyy-mm-dd
       let m = s.match(/\d{4}-\d{2}-\d{2}/);
       if (m) return m[0];
 
-      // formato dd/mm/yyyy
       m = s.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/);
       if (m) {
         const [,d,mo,y] = m;
         return `${y}-${mo}-${d}`;
       }
 
-      // tentativa com ISO ou Date parsing
       const dObj = new Date(s);
       if (!isNaN(dObj.getTime())) {
         const y = dObj.getFullYear();
@@ -306,93 +185,57 @@
         return `${y}-${mo}-${da}`;
       }
 
-      // sem sucesso
       return '';
     }
 
-    // FUNÇÃO CORRIGIDA: Converte para os horários válidos 10:00 ou 15:00
+    // FUNÇÃO SIMPLIFICADA: Usa apenas o horário direto do campo
     function extractTimeHHMM(s) {
       if (!s) return '';
       s = String(s).trim();
       
       console.log('Horário recebido:', s);
 
-      // CASO 1: Se já estiver no formato HH:MM (10:00, 15:00, etc)
-      const m = s.match(/^(\d{1,2}):(\d{2})$/);
+      // Se já estiver no formato HH:MM, retorna direto
+      let m = s.match(/^(\d{1,2}):(\d{2})$/);
       if (m) {
         console.log('Horário já formatado:', s);
         return s;
       }
 
-      // CASO 2: Se for timestamp do Sheets (1899-12-30T...)
+      // Se for timestamp do Sheets, extrai o horário UTC e ajusta
       if (s.includes('1899-12-30')) {
-        console.log('Detectado formato Sheets - convertendo timestamp');
+        console.log('Detectado formato Sheets');
         try {
           const dObj = new Date(s);
           if (!isNaN(dObj.getTime())) {
-            // O timestamp do Sheets representa um horário puro
             const horasUTC = dObj.getUTCHours();
             const minutosUTC = dObj.getUTCMinutes();
             
-            console.log('Timestamp Sheets - UTC:', `${horasUTC}:${minutosUTC}`);
+            console.log('Horário UTC:', `${horasUTC}:${minutosUTC}`);
             
-            // Converter para horário brasileiro (UTC-3)
-            let horasBrasil = horasUTC - 3;
-            if (horasBrasil < 0) horasBrasil += 24;
+            // Para timestamp 1899-12-30T18:06:28.000Z, o horário real é 15:06 no Brasil
+            // Mas como só temos 10:00 e 15:00, vamos mapear baseado no período
+            let horarioFinal = horasUTC < 15 ? '10:00' : '15:00';
             
-            const horarioExtraido = `${pad2(horasBrasil)}:${pad2(minutosUTC)}`;
-            console.log('Horário Brasil (UTC-3):', horarioExtraido);
-            
-            // MAPEAR PARA OS HORÁRIOS VÁLIDOS
-            let horarioFinal = '';
-            
-            // Se o horário extraído estiver próximo de 10:00 (manhã)
-            if ((horasBrasil === 10 && minutosUTC >= 0 && minutosUTC <= 59) || 
-                (horasBrasil === 9 && minutosUTC >= 45)) {
-              horarioFinal = '10:00';
-            }
-            // Se o horário extraído estiver próximo de 15:00 (tarde)
-            else if ((horasBrasil === 15 && minutosUTC >= 0 && minutosUTC <= 59) || 
-                     (horasBrasil === 14 && minutosUTC >= 45)) {
-              horarioFinal = '15:00';
-            }
-            // Se não se encaixar em nenhum, usar lógica baseada no período do dia
-            else {
-              horarioFinal = horasBrasil < 12 ? '10:00' : '15:00';
-            }
-            
-            console.log('Horário final mapeado:', horarioFinal);
+            console.log('Horário mapeado:', horarioFinal);
             return horarioFinal;
           }
         } catch (e) {
-          console.log('Erro ao converter timestamp Sheets:', e);
+          console.log('Erro ao converter timestamp:', e);
         }
       }
 
-      // CASO 3: Tentar extrair e mapear para horários válidos
+      // Tentar extrair HH:MM de qualquer formato
       const m2 = s.match(/(\d{1,2}):(\d{2})/);
       if (m2) {
         const horas = parseInt(m2[1]);
         const minutos = parseInt(m2[2]);
-        
-        let horarioFinal = '';
-        
-        // Mapear para os horários válidos
-        if ((horas === 10 && minutos >= 0 && minutos <= 59) || 
-            (horas === 9 && minutos >= 45)) {
-          horarioFinal = '10:00';
-        } else if ((horas === 15 && minutos >= 0 && minutos <= 59) || 
-                   (horas === 14 && minutos >= 45)) {
-          horarioFinal = '15:00';
-        } else {
-          horarioFinal = horas < 12 ? '10:00' : '15:00';
-        }
-        
-        console.log('Horário extraído e mapeado:', `${horas}:${pad2(minutos)} -> ${horarioFinal}`);
-        return horarioFinal;
+        const resultado = `${pad2(horas)}:${pad2(minutos)}`;
+        console.log('Horário extraído:', resultado);
+        return resultado;
       }
 
-      console.log('Nenhum horário válido encontrado');
+      console.log('Nenhum horário encontrado');
       return '';
     }
 
@@ -406,11 +249,9 @@
       console.log('Data raw:', rawDate);
       console.log('Horario raw:', rawTime);
 
-      // Para data: extrai do campo 'data'
       let dateISO = extractDateISO(rawDate);
       if (!dateISO && ag.timestamp) dateISO = extractDateISO(ag.timestamp);
 
-      // Para horário: usa APENAS o campo 'horario'
       const timeHH = extractTimeHHMM(rawTime);
 
       ag._dateISO = dateISO;
@@ -420,8 +261,27 @@
       console.log('Resultado final:');
       console.log('_dateISO:', ag._dateISO);
       console.log('_timeHHMM:', ag._timeHHMM);
-      console.log('_displayDate:', ag._displayDate);
       console.log('================');
+    }
+
+    // ============ GERENCIAMENTO DE SESSÃO ============
+    function startSessionTimer() {
+      lastActivityTime = Date.now();
+      clearTimeout(logoutTimeout);
+      
+      logoutTimeout = setTimeout(() => {
+        logout();
+        showPanelNotice('Sessão expirada por inatividade. Faça login novamente.', 'error', 10000);
+      }, SESSION_TIMEOUT);
+    }
+
+    function resetSessionTimer() {
+      lastActivityTime = Date.now();
+      clearTimeout(logoutTimeout);
+      logoutTimeout = setTimeout(() => {
+        logout();
+        showPanelNotice('Sessão expirada por inatividade. Faça login novamente.', 'error', 10000);
+      }, SESSION_TIMEOUT);
     }
 
     // ============ AUTENTICAÇÃO ============
@@ -435,31 +295,26 @@
       const u = document.getElementById('user').value.trim();
       const p = document.getElementById('pass').value.trim();
       if (u === LOGIN_USER && p === LOGIN_PASS) {
-        localStorage.setItem('logado','sim');
         document.getElementById('loginDiv').style.display = 'none';
         document.getElementById('panelDiv').style.display = 'block';
+        
+        startSessionTimer();
         carregarAgendamentos();
         showLoginNotice(null);
-        
-        // Inicia o monitoramento de inatividade após o login
-        resetInactivityTimer();
       } else {
         showLoginNotice('Usuário ou senha incorretos.');
       }
     }
 
     function logout() {
-      localStorage.removeItem('logado');
+      clearTimeout(logoutTimeout);
+      
       document.getElementById('panelDiv').style.display = 'none';
       document.getElementById('loginDiv').style.display = 'block';
       document.getElementById('user').value = '';
       document.getElementById('pass').value = '';
       FULL_AGENDAMENTOS = [];
       SHOWN_AGENDAMENTOS = [];
-      
-      // Limpa os timers ao fazer logout
-      clearTimeout(inactivityTimer);
-      clearInterval(warningTimer);
     }
 
     // ============ CARREGAR & FILTRAR ============
@@ -483,7 +338,6 @@
           return;
         }
 
-        // normalizar todos os agendamentos
         FULL_AGENDAMENTOS = dados.agendamentos.filter(a => a && (a.nome || '').toString().trim() !== '');
         
         console.log('=== INICIANDO NORMALIZAÇÃO DOS DADOS ===');
@@ -492,7 +346,6 @@
         });
         console.log('=== FIM DA NORMALIZAÇÃO ===');
 
-        // aplicar filtros localmente
         const nomeLower = filtroNome.toLowerCase();
         SHOWN_AGENDAMENTOS = FULL_AGENDAMENTOS.filter(ag => {
           const okNome = !filtroNome || ((ag.nome || '').toString().toLowerCase().includes(nomeLower));
@@ -501,7 +354,6 @@
           return okNome && okData && okHorario;
         });
 
-        // renderizar
         if (SHOWN_AGENDAMENTOS.length === 0) {
           grid.innerHTML = '<div class="empty-state">Nenhum agendamento encontrado</div>';
         } else {
@@ -519,7 +371,8 @@
             const bairro = escapeHtml(ag.bairro || '');
             const como = escapeHtml(ag.comoConheceu || '');
             const obs = escapeHtml(ag.observacoes || '');
-            
+            const status = ag.status || 'Pendente';
+
             const statusClass = status.toString().toLowerCase().includes('pend') ? 'status-pendente' : 'status-confirmado';
 
             return `
@@ -527,6 +380,9 @@
                 <div class="card-header">
                   <h3 class="paciente-nome">${nome}</h3>
                   <div class="agendamento-info"><span class="info-label">Data:</span> ${displayDate} ${horario ? 'às ' + horario : ''}</div>
+                  <div class="agendamento-info" style="font-size:12px; color:#999;">
+                    <span class="info-label">Debug:</span> Horário original: ${ag.horario || 'vazio'} → Extraído: ${ag._timeHHMM || 'vazio'}
+                  </div>
                 </div>
 
                 <div class="agendamento-info"><span class="info-label">Telefone:</span> ${telefone}</div>
@@ -601,20 +457,16 @@
     document.getElementById('aplicarFiltrosBtn').addEventListener('click', carregarAgendamentos);
     document.getElementById('exportBtn').addEventListener('click', exportarExcel);
     document.getElementById('pass').addEventListener('keypress', function(e){ if (e.key === 'Enter') login(); });
-    document.getElementById('stayLoggedInBtn').addEventListener('click', hideTimeoutWarning);
+
+    // Eventos para resetar o timer de sessão
+    document.addEventListener('click', resetSessionTimer);
+    document.addEventListener('keypress', resetSessionTimer);
+    document.addEventListener('mousemove', resetSessionTimer);
 
     window.onload = function() {
-      // Configura os listeners de atividade
-      setupActivityListeners();
-      
-      if (localStorage.getItem('logado') === 'sim') {
-        document.getElementById('loginDiv').style.display = 'none';
-        document.getElementById('panelDiv').style.display = 'block';
-        carregarAgendamentos();
-        
-        // Inicia o monitoramento de inatividade
-        resetInactivityTimer();
-      }
+      // Sempre mostrar login ao carregar (não salva estado)
+      document.getElementById('loginDiv').style.display = 'block';
+      document.getElementById('panelDiv').style.display = 'none';
     };
   </script>
 </body>
